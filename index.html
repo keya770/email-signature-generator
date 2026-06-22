@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<!-- =============================================================================
+  INTERVIEW PREP — EMAIL SIGNATURE GENERATOR (Task 1)
+  =============================================================================
+  2 MIN PITCH: "Internal tool banaya jahan employee details daal kar professional
+  email signature generate hoti hai — 3 templates, Outlook/Gmail safe HTML, copy
+  for Outlook, download .htm, dark/light preview, validation."
+
+  TECH USED & WHY:
+  • HTML form — name, phone, email, template, social toggles
+  • CSS — ONLY this generator page (dark UI); NOT copied into signature
+  • Vanilla JavaScript — TASK: no framework; string templates build signature
+  • Table + inline style in OUTPUT — Outlook Word engine flex/CSS support nahi karta
+  • escapeHtml — XSS safety when user types <script> in name
+  • Clipboard API + execCommand fallback — rich HTML paste for Outlook
+  • Absolute image URLs — Outlook blocks base64/local images
+  • VML + <![if mso]> — Outlook-only rounded button
+  • mso-color-alt + white bgcolor — dark mode email mein text readable
+
+  MAIN FLOW: Fill form → Generate → buildSignature(template) → previewBox.innerHTML
+  → Copy for Outlook (formatted) OR Download .htm OR Copy raw HTML
+
+  KEY INTERVIEW ANSWERS:
+  • Email mein <div flex> kyun nahi? → Outlook breaks; tables 1990s standard
+  • PNG logo 2x size trick → sharp in Outlook, not blurry
+  • 3 templates: classic (side logo), executive (top banner), compact (mobile)
+============================================================================= -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tattvam Markets — Email Signature Generator</title>
+    <link rel="icon" href="https://www.tattvammarkets.com/img/min-logo.png" type="image/png">
+    <!-- CSS styles ONLY the generator tool — NOT included in copied signature HTML -->
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Tool UI brand colors (dark theme) */
+        :root {
+            --navy: #0B1F3A;
+            --navy-mid: #0f2a4d;
+            --teal: #42d9e4;
+            --teal-light: #6ee4ed;
+            --gold: #42d9e4;
+            --surface: #111627;
+            --border: #1e2440;
+            --muted: #8a8fa0;
+            --error: #f87171;
+            --success: #4ade80;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+            background: var(--navy);
+            color: #fff;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Page top banner */
+        .header {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+            padding: 28px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--gold);
+        }
+        .header-brand {
+            display: inline-block;
+            margin-bottom: 12px;
+            background: var(--navy);
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .header-brand img {
+            height: 46px;
+            width: auto;
+            max-width: 260px;
+            display: block;
+        }
+        .header h1 { font-size: 1.35rem; color: #fff; font-weight: 600; letter-spacing: 0.02em; }
+        .header p { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+
+        /* Two columns: form (left) + preview (right) */
+        .container {
+            max-width: 1180px;
+            margin: 32px auto 48px;
+            padding: 0 16px;
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        /* Left column — input fields */
+        .form-section {
+            flex: 1 1 340px;
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 28px 24px;
+            border: 1px solid var(--border);
+        }
+        .form-section h2 {
+            color: var(--teal-light);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group label .req { color: var(--teal); }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--navy);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(74, 171, 179, 0.15);
+        }
+        .form-group input.invalid { border-color: var(--error); }
+        .form-group input.valid { border-color: var(--success); }
+        .form-group input::placeholder { color: #4a5068; }
+        .field-error {
+            display: none;
+            font-size: 0.75rem;
+            color: var(--error);
+            margin-top: 5px;
+        }
+        .field-error.visible { display: block; } /* Shown by validateField() when invalid */
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            margin-top: 6px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.8rem;
+            color: #c5c9d6;
+            cursor: pointer;
+            margin: 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--teal);
+            cursor: pointer;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--teal) 0%, #3a959c 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s, transform 0.15s;
+            letter-spacing: 0.03em;
+        }
+        .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .preview-section {
+            flex: 1.25 1 380px;
+            min-width: 0;
+        }
+        .preview-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .preview-header h2 {
+            color: var(--teal-light);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .preview-toggle {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .preview-toggle button {
+            padding: 8px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .preview-toggle button.active {
+            background: var(--teal);
+            color: #fff;
+        }
+
+        .preview-shell {
+            border-radius: 14px;
+            padding: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        /* Light mode = simulates normal email background */
+        .preview-shell.mode-light {
+            background: #f4f6f8;
+            border: 1px solid #dde2e8;
+        }
+        /* Dark mode = dark compose area; signature white card still visible */
+        .preview-shell.mode-dark {
+            background: #12141c;
+            border: 1px solid #2a3040;
+            padding: 20px 18px 24px;
+        }
+        .preview-mode-hint {
+            display: none;
+            font-size: 0.72rem;
+            color: #8a8fa0;
+            text-align: center;
+            margin: 0 0 14px;
+            line-height: 1.4;
+        }
+        .preview-shell.mode-dark .preview-mode-hint {
+            display: block;
+        }
+
+        .preview-box {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 28px 24px;
+            min-height: 220px;
+            overflow-x: auto;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        /* Dark email: outer area dark, signature white card floats on top (real client behaviour) */
+        .preview-shell.mode-dark .preview-box {
+            background: transparent;
+            border-radius: 0;
+            padding: 12px 4px;
+        }
+        .preview-shell.mode-dark .preview-box > table {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        }
+        .preview-shell.mode-dark .preview-placeholder {
+            color: #9ca3af;
+        }
+        .preview-placeholder {
+            color: #999;
+            font-size: 0.88rem;
+            text-align: center;
+            padding: 48px 16px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .action-btn {
+            flex: 1 1 auto;
+            min-width: 140px;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .action-btn:hover { opacity: 0.88; }
+        .btn-outlook { background: #0078d4; color: #fff; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--teal) 0%, #3a959c 100%);
+            color: #fff;
+        }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--teal-light);
+            border: 1px solid var(--teal);
+        }
+
+        .feedback {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+        .feedback.success {
+            display: block;
+            background: rgba(74, 222, 128, 0.12);
+            border: 1px solid rgba(74, 222, 128, 0.35);
+            color: var(--success);
+        }
+        .feedback.error {
+            display: block;
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: var(--error);
+        }
+
+        .help-box {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .help-box.visible { display: block; }
+        .help-box p { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+        .help-box strong { color: #e8eaef; }
+        .help-box .label { color: var(--teal-light); font-weight: 600; font-size: 0.82rem; }
+        .help-box .warn {
+            font-size: 0.74rem;
+            color: #e8c94a;
+            padding: 10px 12px;
+            background: #1a1500;
+            border-radius: 6px;
+            border: 1px solid #3d3000;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .action-btn { min-width: 100%; flex: 1 1 100%; }
+            .preview-header { flex-direction: column; align-items: flex-start; }
+        }
+        @media (max-width: 480px) {
+            .form-section, .preview-shell { padding: 18px 14px; }
+            .header h1 { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== GENERATOR UI (not pasted into email) ========== -->
+<header class="header">
+    <div class="header-brand">
+        <img src="https://www.tattvammarkets.com/img/Tattvam_HLogo_Color_SVG1.svg" alt="Tattvam Markets">
+    </div>
+    <h1>Premium Email Signature Generator</h1>
+    <p>Premium financial signatures — Outlook, Gmail &amp; Apple Mail ready</p>
+</header>
+
+<main class="container">
+  <!-- LEFT: user inputs — read by getFormData() on Generate -->
+  <section class="form-section" aria-label="Signature details form">
+    <h2>Your Details</h2>
+    <form id="sigForm" novalidate>
+      <div class="form-group">
+        <label for="fullName">Full Name <span class="req">*</span></label>
+        <input type="text" id="fullName" placeholder="e.g. Ahmed Al Maktoum" autocomplete="name">
+        <span class="field-error" id="err-fullName"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="jobTitle">Job Title <span class="req">*</span></label>
+        <input type="text" id="jobTitle" placeholder="e.g. Senior Account Manager" autocomplete="organization-title">
+        <span class="field-error" id="err-jobTitle"></span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Phone <span class="req">*</span></label>
+          <input type="tel" id="phone" placeholder="+971 4 123 4567" autocomplete="tel">
+          <span class="field-error" id="err-phone"></span>
+        </div>
+        <div class="form-group">
+          <label for="whatsapp">WhatsApp</label>
+          <input type="tel" id="whatsapp" placeholder="+971501234567">
+          <span class="field-error" id="err-whatsapp"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="ahmed@tattvammarkets.com" autocomplete="email">
+        <span class="field-error" id="err-email"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="linkedinUrl">LinkedIn Profile URL</label>
+        <input type="url" id="linkedinUrl" placeholder="https://www.linkedin.com/in/your-profile">
+        <span class="field-error" id="err-linkedinUrl"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="websiteUrl">Company Website <span class="req">*</span></label>
+        <select id="websiteUrl">
+          <option value="com">www.tattvammarkets.com</option>
+          <option value="ae">www.tattvammarkets.ae</option>
+          <option value="org">www.tattvammarkets.org</option>
+        </select>
+      </div>
+
+      <p class="section-label">Template &amp; Options</p>
+
+      <div class="form-group">
+        <label for="template">Signature Template</label>
+        <select id="template">
+          <option value="corporate">Design 1 — Modern Corporate Executive</option>
+          <option value="institution">Design 2 — Premium Financial Institution</option>
+          <option value="luxury">Design 3 — Luxury Fintech Card</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="includeDisclaimer" checked>
+          Include regulatory disclaimer
+        </label>
+      </div>
+
+      <p class="section-label">Social Icons</p>
+      <div class="checkbox-group" id="socialToggles">
+        <label><input type="checkbox" name="social" value="linkedin" checked> LinkedIn</label>
+        <label><input type="checkbox" name="social" value="youtube" checked> YouTube</label>
+        <label><input type="checkbox" name="social" value="telegram" checked> Telegram</label>
+        <label><input type="checkbox" name="social" value="instagram" checked> Instagram</label>
+        <label><input type="checkbox" name="social" value="facebook" checked> Facebook</label>
+      </div>
+
+      <!-- btnGenerate → generateSignature() — validates then builds HTML -->
+      <button type="button" class="btn" id="btnGenerate">Generate Signature</button>
+    </form>
+  </section>
+
+  <!-- RIGHT: live preview + copy/download actions -->
+  <section class="preview-section" aria-label="Signature preview">
+    <div class="preview-header">
+      <h2>Preview</h2>
+      <div class="preview-toggle" role="group" aria-label="Preview mode">
+        <button type="button" id="btnPreviewLight" class="active" aria-pressed="true">Light email</button>
+        <button type="button" id="btnPreviewDark" aria-pressed="false">Dark email</button>
+      </div>
+    </div>
+
+    <div class="preview-shell mode-light" id="previewShell">
+      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — logos use PNG for Outlook compatibility. Use Copy for Outlook or Download .htm before pasting.</p>
+      <!-- Generated signature HTML injected here by generateSignature() -->
+      <div class="preview-box" id="previewBox">
+        <p class="preview-placeholder">Fill in your details and click Generate</p>
+      </div>
+    </div>
+
+    <div class="action-buttons" id="actionButtons" hidden>
+      <button type="button" class="action-btn btn-outlook" id="btnCopyOutlook">Copy for Outlook</button>
+      <button type="button" class="action-btn btn-primary" id="btnDownload">Download .htm</button>
+      <button type="button" class="action-btn btn-secondary" id="btnCopyHtml">Copy HTML Code</button>
+    </div>
+
+    <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+
+    <div class="help-box" id="copyHelp">
+      <p class="label">How to add your signature</p>
+      <p><strong>Outlook Desktop:</strong> Click <strong>Copy for Outlook</strong> → File → Options → Mail → Signatures → New → paste (Ctrl+V) inside the editor.</p>
+      <p><strong>Best for images:</strong> Use <strong>Download .htm</strong> → open in Chrome/Edge → Ctrl+A → Ctrl+C → paste into Outlook. Allow external images when prompted.</p>
+      <p><strong>Gmail:</strong> Copy for Outlook works in Gmail too → Settings → See all settings → General → Signature → paste.</p>
+      <p class="warn"><strong>Important:</strong> Use <strong>Copy for Outlook</strong> or Download .htm — not raw HTML paste. In Outlook, right-click signature → <strong>Download Pictures</strong> if logos don't show.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ==========================================================================
+   EMAIL SIGNATURE — JavaScript (2 ALAG WORLDS)
+   ==========================================================================
+   WORLD 1 — Generator page (yeh file ka form/preview):
+     vanilla JS, DOM, addEventListener, classList, Blob download
+   WORLD 2 — Generated signature (user email mein paste):
+     sirf <table> + inline style="" + absolute img URLs
+     NO <link css>, NO flexbox/grid in signature — Gmail/Outlook strip/break
+
+   INTERVIEW: "Page styling aur email styling alag rakhi — common mistake hai
+   ek CSS file dono ke liye use karna — email mein fail ho jata hai."
+   ========================================================================== */
+
+/* Premium brand palette — inline styles in generated signature */
+const BRAND = {
+    navy: '#0B1F3A',
+    navyMid: '#132d52',
+    teal: '#42d9e4',
+    text: '#334155',
+    label: '#999999',
+    textMuted: '#888888',
+    link: '#0B1F3A',
+    white: '#FFFFFF',
+    offWhite: '#f8fafc',
+    grayBg: '#f1f5f9',
+    border: '#e0e0e0',
+    darkText: '#E2E8F0'
+};
+
+const FONT = "Arial,Helvetica,'Segoe UI',sans-serif";
+
+const COMPANY_TAGLINE = 'Regulated Broker &nbsp;&middot;&nbsp; Dubai, UAE';
+const COMPANY_ADDRESS = 'Office 5103, 51st Floor, Aspin Commercial Tower, Sheikh Zayed Road, Dubai, UAE';
+
+const LOGO_ICON_URL = 'https://www.tattvammarkets.com/img/min-logo.png';
+const LOGO_FULL_URL = 'https://www.tattvammarkets.com/img/Tattvam_HLogo_Color_SVG1.svg';
+const LOGO_CORPORATE_URL = 'https://client.tattvammarkets.com/uploads/public/assets/2025/10/02/aa94fb003a1a4782055753bbe5e00452.png';
+
+const WEBSITE_OPTIONS = {
+    com: { url: 'https://www.tattvammarkets.com/', label: 'www.tattvammarkets.com' },
+    ae: { url: 'https://www.tattvammarkets.ae/', label: 'www.tattvammarkets.ae' },
+    org: { url: 'https://www.tattvammarkets.org/', label: 'www.tattvammarkets.org' }
+};
+
+const PORTAL_URL = 'https://client.tattvammarkets.com/register/';
+
+const SOCIAL_ICONS = {
+    linkedin: {
+        url: 'https://www.linkedin.com/company/tattvam-markets/',
+        img: 'https://cdn-icons-png.flaticon.com/32/3536/3536505.png',
+        bg: '#0A66C2',
+        alt: 'LinkedIn'
+    },
+    youtube: {
+        url: 'https://www.youtube.com/@Tattvammarkets',
+        img: 'https://cdn-icons-png.flaticon.com/32/1384/1384060.png',
+        bg: '#FF0000',
+        alt: 'YouTube'
+    },
+    telegram: {
+        url: 'https://t.me/TattvamMarkets',
+        img: 'https://cdn-icons-png.flaticon.com/32/2111/2111646.png',
+        bg: '#26A5E4',
+        alt: 'Telegram'
+    },
+    instagram: {
+        url: 'https://www.instagram.com/tattvammarkets/',
+        img: 'https://cdn-icons-png.flaticon.com/32/2111/2111463.png',
+        bg: '#E4405F',
+        alt: 'Instagram'
+    },
+    facebook: {
+        url: 'https://www.facebook.com/TattvamMarkets/',
+        img: 'https://cdn-icons-png.flaticon.com/32/733/733547.png',
+        bg: '#1877F2',
+        alt: 'Facebook'
+    }
+};
+
+const DISCLAIMER_TEXT =
+    '<strong style="color:#0B1F3A;mso-color-alt:#0B1F3A;">High-Risk Investment Warning:</strong> ' +
+    '<span style="color:#334155;mso-color-alt:#334155;">Trading Foreign Exchange (Forex) and Contracts for Differences (CFDs) are complex instruments and come with a high risk of losing money rapidly due to leverage. The majority of investor accounts lose money when trading CFDs and Forex. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.</span>';
+
+let generatedHTML = '';
+let outlookHTML = '';
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function sanitizePhone(phone) {
+    return phone ? phone.replace(/\s/g, '') : '';
+}
+
+function sanitizeWhatsApp(wa) {
+    return wa ? wa.replace(/[^0-9+]/g, '').replace(/^\+/, '') : '';
+}
+
+function getWebsiteConfig(key) {
+    return WEBSITE_OPTIONS[key] || WEBSITE_OPTIONS.com;
+}
+
+function getPreviewEmailMode() {
+    const btnDark = document.getElementById('btnPreviewDark');
+    return btnDark && btnDark.classList.contains('active') ? 'dark' : 'light';
+}
+
+function buildNavyLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const size = opts.size || 56;
+    const srcSize = size * 2;
+    const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
+      <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;">
+        <tr>
+          <td align="center" valign="middle" bgcolor="${BRAND.navy}"
+            style="background-color:${BRAND.navy};padding:10px 14px;mso-color-alt:${BRAND.navy};">
+            <img src="${LOGO_ICON_URL}" alt="Tattvam Markets" width="${srcSize}" height="${srcSize}"
+              style="display:block;width:${size}px;height:${size}px;max-width:${size}px;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+          </td>
+        </tr>
+      </table>
+    </a>`;
+}
+
+function buildSvgLogoBlock(websiteUrl, options) {
+    return buildNavyLogoBlock(websiteUrl, options);
+}
+
+function buildLogoForTemplate(data, logoOpts) {
+    const opts = logoOpts || {};
+    const isDark = data.emailMode === 'dark';
+    const tpl = data.template;
+
+    if (tpl === 'corporate' || tpl === 'institution') {
+        return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 190 });
+    }
+
+    if (tpl === 'luxury') {
+        return isDark
+            ? buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 185 })
+            : buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 190 });
+    }
+
+    return buildCorporateLogoBlock(data.websiteUrl, opts);
+}
+
+function buildCorporateLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const w = opts.width || 190;
+    const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
+      <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;">
+        <tr>
+          <td align="center" valign="middle" bgcolor="${BRAND.white}"
+            style="${buildAntiInvertBg(BRAND.white)}padding:6px 10px;">
+            <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${w}" height="${Math.round(w * 0.26)}"
+              border="0"
+              style="display:block;width:${w}px;height:auto;max-width:${w}px;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+          </td>
+        </tr>
+      </table>
+    </a>`;
+}
+
+function buildIconLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const size = opts.size || 58;
+    const srcSize = size * 2;
+    const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    const nameSize = opts.nameSize || '13px';
+
+    return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
+      <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;">
+        <tr>
+          <td align="center" valign="middle" bgcolor="${BRAND.white}"
+            style="background-color:${BRAND.white};padding:10px 14px 6px;border:1px solid ${BRAND.border};">
+            <img src="${LOGO_ICON_URL}" alt="Tattvam Markets" width="${srcSize}" height="${srcSize}"
+              style="display:block;width:${size}px;height:${size}px;max-width:${size}px;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+          </td>
+        </tr>
+        <tr>
+          <td align="center" bgcolor="${BRAND.white}"
+            style="background-color:${BRAND.white};padding:4px 14px 10px;border:1px solid ${BRAND.border};border-top:0;font-family:${FONT};font-size:${nameSize};font-weight:bold;color:${BRAND.navy};letter-spacing:0.4px;line-height:1.3;white-space:nowrap;mso-color-alt:${BRAND.navy};">
+            Tattvam Markets
+          </td>
+        </tr>
+      </table>
+    </a>`;
+}
+
+function buildFullLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const size = opts.size || 56;
+    return buildNavyLogoBlock(websiteUrl, { size });
+}
+
+function buildBrandLogoBlock(websiteUrl, options) {
+    return buildIconLogoBlock(websiteUrl, options);
+}
+
+function buildHeaderRow(data, style) {
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const logoOpts = style.logoOpts || { width: 190 };
+    const logoHtml = style.logoHtml || buildLogoForTemplate(data, logoOpts);
+
+    const nameStyle = style.nameStyle ||
+        `font-family:${FONT};font-size:22px;font-weight:bold;color:${BRAND.navy};line-height:1.2;mso-color-alt:${BRAND.navy};`;
+    const titleStyle = style.titleStyle ||
+        `font-family:${FONT};font-size:16px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:5px;mso-color-alt:${BRAND.teal};`;
+    const taglineStyle = style.taglineStyle ||
+        `font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.45;padding-top:10px;mso-color-alt:${BRAND.textMuted};`;
+
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+      <tr>
+        <td align="left" valign="top" width="56%" style="width:56%;vertical-align:top;padding:0 20px 0 0;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="padding:0;${nameStyle}">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding:0;${titleStyle}">${title}</td>
+            </tr>
+            ${style.showTagline ? `<tr><td style="padding:0;${taglineStyle}">${COMPANY_TAGLINE}</td></tr>` : ''}
+          </table>
+        </td>
+        <td align="right" valign="top" width="44%" style="width:44%;vertical-align:top;padding:0;">
+          ${logoHtml}
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildDivider() {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:18px 0 16px;">
+      <tr>
+        <td style="border-bottom:1px solid ${BRAND.border};font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildContactRow(label, valueHtml) {
+    const labelStyle = `font-family:${FONT};font-size:14px;color:${BRAND.label};line-height:1.7;mso-color-alt:${BRAND.label};`;
+    return `
+    <tr>
+      <td valign="top" style="padding:5px 0;font-family:${FONT};font-size:14px;line-height:1.7;">
+        <span style="${labelStyle}">${label}:&nbsp;</span>${valueHtml}
+      </td>
+    </tr>`;
+}
+
+function buildContactGrid(data) {
+    const phone = escapeHtml(data.phone);
+    const email = escapeHtml(data.email);
+    const whatsapp = escapeHtml(data.whatsapp);
+    const websiteLabel = escapeHtml(data.websiteLabel);
+    const tel = sanitizePhone(data.phone);
+    const waNum = sanitizeWhatsApp(data.whatsapp);
+    const waLink = waNum ? `https://wa.me/${waNum}` : '';
+    const linkStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
+    const webStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
+
+    let rows = buildContactRow('Phone', `<a href="tel:${escapeHtml(tel)}" style="${linkStyle}">${phone}</a>`);
+    if (data.whatsapp) {
+        rows += buildContactRow('WhatsApp', `<a href="${waLink}" style="${linkStyle}">${whatsapp}</a>`);
+    }
+    rows += buildContactRow('Email', `<a href="mailto:${email}" style="${linkStyle}">${email}</a>`);
+    rows += buildContactRow('Web', `<a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${webStyle}">${websiteLabel}</a>`);
+
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      ${rows}
+    </table>`;
+}
+
+function buildContactInline(data, separatorColor) {
+    const phone = escapeHtml(data.phone);
+    const email = escapeHtml(data.email);
+    const whatsapp = escapeHtml(data.whatsapp);
+    const websiteLabel = escapeHtml(data.websiteLabel);
+    const tel = sanitizePhone(data.phone);
+    const waNum = sanitizeWhatsApp(data.whatsapp);
+    const waLink = waNum ? `https://wa.me/${waNum}` : '';
+    const linkStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
+    const webStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
+    const sepStyle = `color:${BRAND.border};padding:0 8px;mso-color-alt:${BRAND.border};`;
+
+    let line = `<a href="tel:${escapeHtml(tel)}" style="${linkStyle}">${phone}</a>`;
+    if (data.whatsapp) {
+        line += `<span style="${sepStyle}">&middot;</span><a href="${waLink}" style="${linkStyle}">${whatsapp}</a>`;
+    }
+    line += `<span style="${sepStyle}">&middot;</span><a href="mailto:${email}" style="${linkStyle}">${email}</a>`;
+    line += `<span style="${sepStyle}">&middot;</span><a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${webStyle}">${websiteLabel}</a>`;
+
+    return line;
+}
+
+function buildAntiInvertBg(color) {
+    return `background-color:${color};background-image:linear-gradient(${color},${color});mso-color-alt:${color};`;
+}
+
+function buildCTAHtml(portalUrl) {
+    const bg = BRAND.teal;
+    const bgStyle = buildAntiInvertBg(bg);
+    return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td align="left" style="padding:0;">
+          <!--[if mso]>
+          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:42px;v-text-anchor:middle;width:205px;" arcsize="0%" stroke="f" fillcolor="${bg}">
+            <w:anchorlock/>
+            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1px;">CLIENT PORTAL</center>
+          </v:roundrect>
+          <![endif]-->
+          <!--[if !mso]><!-->
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
+            <tr>
+              <td align="center" valign="middle" bgcolor="${bg}" style="${bgStyle}border:1px solid ${bg};">
+                <a href="${portalUrl}" target="_blank"
+                  style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;color:#ffffff !important;text-decoration:none;letter-spacing:1px;line-height:14px;mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;">
+                  <span style="color:#ffffff !important;mso-style-textfill-fill-color:#ffffff;mso-style-textfill-type:solid;">CLIENT PORTAL</span>
+                </a>
+              </td>
+            </tr>
+          </table>
+          <!--<![endif]-->
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildSocialIcons(data, style) {
+    const platforms = data.socialPlatforms;
+    if (!platforms.length) return '';
+    const st = style || {};
+
+    const cells = platforms.map((key) => {
+        const s = SOCIAL_ICONS[key];
+        if (!s) return '';
+        const href = key === 'linkedin' && data.linkedinUrl ? data.linkedinUrl : s.url;
+        const size = st.iconSize || 32;
+        const imgSize = st.imgSize || 16;
+        return `
+        <td style="padding:0 6px 0 0;">
+          <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+            <tr>
+              <td align="center" valign="middle" width="${size}" height="${size}" bgcolor="${s.bg}"
+                style="background-color:${s.bg};width:${size}px;height:${size}px;border:1px solid ${BRAND.white};">
+                <a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;display:block;line-height:0;border:0;">
+                  <img src="${s.img}" alt="${s.alt}" width="${imgSize}" height="${imgSize}" border="0"
+                    style="display:block;border:0;outline:none;width:${imgSize}px;height:${imgSize}px;-ms-interpolation-mode:bicubic;" />
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>`;
+    }).join('');
+
+    const labelColor = st.labelColor || BRAND.textMuted;
+    const bgColor = st.footerBg ? BRAND.grayBg : (st.bgColor || 'transparent');
+    const topBorder = st.topBorder && !st.footerBg ? `border-top:1px solid ${st.topBorder};` : '';
+    const cellPad = st.footerBg ? 'padding:16px 22px 18px;' : 'padding:18px 0 0 0;';
+
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:0;">
+      <tr>
+        <td bgcolor="${bgColor}" style="background-color:${bgColor};${cellPad}${topBorder}mso-color-alt:${bgColor};">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td style="padding:0 0 10px 0;font-family:${FONT};font-size:10px;font-weight:bold;color:${BRAND.navy};text-transform:uppercase;letter-spacing:1px;mso-color-alt:${BRAND.navy};">
+                Connect with us
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildDisclaimerBlock() {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:18px;">
+      <tr>
+        <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border:1px solid ${BRAND.border};padding:14px 16px;font-family:${FONT};font-size:10px;color:${BRAND.text};line-height:1.6;mso-color-alt:${BRAND.text};">
+          ${DISCLAIMER_TEXT}
+        </td>
+      </tr>
+    </table>`;
+}
+
+function wrapSignature(innerHtml, width, options) {
+    const opts = options || {};
+    const disclaimerHtml = opts.includeDisclaimer ? buildDisclaimerBlock() : '';
+    const w = width || 600;
+
+    return `
+<table cellpadding="0" cellspacing="0" border="0" width="${w}" bgcolor="${BRAND.white}"
+  style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.text};max-width:${w}px;width:100%;border-collapse:collapse;${buildAntiInvertBg(BRAND.white)}mso-table-lspace:0pt;mso-table-rspace:0pt;">
+  <tr>
+    <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}${opts.outerStyle || ''}">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+        <tr>
+          <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}${opts.innerStyle || ''}">
+            ${innerHtml}
+            ${disclaimerHtml}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
+}
+
+/* Design 1 — Modern Corporate Executive */
+function templateCorporate(data) {
+    const header = buildHeaderRow(data, {
+        logoOpts: { width: 195 },
+        showTagline: false,
+        nameStyle: `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:-0.2px;mso-color-alt:${BRAND.navy};`,
+        titleStyle: `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
+    });
+
+    const inner = `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+      <tr>
+        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
+        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 22px;">
+                ${header}
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 22px 22px;">
+                ${buildDivider()}
+                ${buildContactGrid(data)}
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:18px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
+                      ${COMPANY_TAGLINE}
+                    </td>
+                  </tr>
+                  <tr><td style="padding:4px 0 0 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};mso-color-alt:${BRAND.grayBg};">
+                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.navy })}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+
+    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
+}
+
+/* Design 2 — Premium Financial Institution */
+function templateInstitution(data) {
+    const header = buildHeaderRow(data, {
+        logoOpts: { width: 185 },
+        showTagline: false,
+        nameStyle: `font-family:Georgia,'Times New Roman',${FONT};font-size:25px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:0.1px;mso-color-alt:${BRAND.navy};`,
+        titleStyle: `font-family:${FONT};font-size:16px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
+    });
+
+    const inner = `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td width="4" bgcolor="${BRAND.navy}" style="width:4px;background-color:${BRAND.navy};font-size:0;line-height:0;">&nbsp;</td>
+        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 20px 22px;border-bottom:2px solid ${BRAND.teal};">
+                ${header}
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 26px 22px 22px;">
+                ${buildContactGrid(data)}
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:12px;">
+                  <tr>
+                    <td style="padding:0 0 10px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.55;mso-color-alt:${BRAND.textMuted};">
+                      ${COMPANY_ADDRESS}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 0 14px 0;font-family:${FONT};font-size:12px;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
+                      ${COMPANY_TAGLINE}
+                    </td>
+                  </tr>
+                  <tr><td style="padding:0 0 0 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};mso-color-alt:${BRAND.grayBg};">
+                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.navy })}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+
+    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
+}
+
+/* Design 3 — Luxury Fintech Card */
+function templateLuxury(data) {
+    const isDark = data.emailMode === 'dark';
+
+    if (isDark) {
+        const header = buildHeaderRow(data, {
+            logoOpts: { width: 185 },
+            showTagline: false,
+            nameStyle: `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;mso-color-alt:${BRAND.navy};`,
+            titleStyle: `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
+        });
+
+        const inner = `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+      <tr>
+        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
+        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 22px;">
+                ${header}
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 22px 22px;">
+                ${buildDivider()}
+                ${buildContactGrid(data)}
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:14px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
+                      ${COMPANY_TAGLINE}
+                    </td>
+                  </tr>
+                  <tr><td style="padding:6px 0 8px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                </table>
+                ${buildSocialIcons(data, {
+                    topBorder: BRAND.border,
+                    labelColor: BRAND.navy,
+                    iconSize: 32,
+                    imgSize: 16
+                })}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+
+        return wrapSignature(inner, 640, { includeDisclaimer: data.includeDisclaimer });
+    }
+
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const logoBlock = buildCorporateLogoBlock(data.websiteUrl, { width: 190 });
+
+    const inner = `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+      <tr>
+        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
+        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td bgcolor="${BRAND.navy}" style="background-color:${BRAND.navy};padding:20px 24px 18px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td align="left" valign="middle" width="54%" style="width:54%;vertical-align:middle;padding-right:16px;">
+                      <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                        <tr>
+                          <td style="font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.white};line-height:1.2;mso-color-alt:${BRAND.white};">${name}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding-top:6px;font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.4;mso-color-alt:${BRAND.teal};">${title}</td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td align="right" valign="middle" width="46%" style="width:46%;vertical-align:middle;">
+                      ${logoBlock}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 24px 22px 20px;">
+                ${buildContactGrid(data)}
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:14px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
+                      ${COMPANY_TAGLINE}
+                    </td>
+                  </tr>
+                  <tr><td style="padding:6px 0 8px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                </table>
+                ${buildSocialIcons(data, {
+                    topBorder: BRAND.border,
+                    labelColor: BRAND.navy,
+                    iconSize: 32,
+                    imgSize: 16
+                })}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+
+    return wrapSignature(inner, 640, { includeDisclaimer: data.includeDisclaimer });
+}
+
+const TEMPLATES = {
+    corporate: templateCorporate,
+    institution: templateInstitution,
+    luxury: templateLuxury
+};
+
+/*
+ * buildSignature(data) — ROUTER
+ * data.template = 'classic' | 'executive' | 'compact'
+ * TEMPLATES object maps name → function
+ * RETURNS: complete HTML string → preview + clipboard
+ */
+function buildSignature(data) {
+    const fn = TEMPLATES[data.template] || TEMPLATES.corporate;
+    return fn(data);
+}
+
+/* Wraps signature in full HTML doc + color-scheme meta for downloaded .htm file */
+function buildOutlookDocument(bodyHtml) {
+    return `<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="Generator" content="Tattvam Signature Generator">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light">
+<!--[if gte mso 9]>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
+<style>
+  :root { color-scheme: light only; supported-color-schemes: light; }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+${bodyHtml}
+</body>
+</html>`;
+}
+
+/* --- Form validation (generator page only) --- */
+
+/* Each field id → function returning error message or '' */
+const VALIDATORS = {
+    fullName: (v) => (!v.trim() ? 'Please enter your full name.' : ''),
+    jobTitle: (v) => (!v.trim() ? 'Please enter your job title.' : ''),
+    phone: (v) => {
+        if (!v.trim()) return 'Please enter your phone number.';
+        if (!/^[+\d\s().-]{7,}$/.test(v.trim())) return 'Enter a valid phone number.';
+        return '';
+    },
+    email: (v) => {
+        if (!v.trim()) return 'Please enter your email address.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())) return 'Enter a valid email address.';
+        return '';
+    },
+    whatsapp: (v) => {
+        if (!v.trim()) return '';
+        if (!/^[+\d\s().-]{7,}$/.test(v.trim())) return 'Enter a valid WhatsApp number.';
+        return '';
+    },
+    linkedinUrl: (v) => {
+        if (!v.trim()) return '';
+        try {
+            const u = new URL(v.trim());
+            if (!u.hostname.includes('linkedin.com')) return 'Enter a valid LinkedIn URL.';
+        } catch {
+            return 'Enter a valid LinkedIn URL.';
+        }
+        return '';
+    }
+};
+
+/* Validate one input; show/hide #err-{id} and invalid/valid classes */
+function validateField(id) {
+    const input = document.getElementById(id);
+    const errEl = document.getElementById('err-' + id);
+    if (!input || !VALIDATORS[id]) return true;
+
+    const msg = VALIDATORS[id](input.value);
+    errEl.textContent = msg;
+    errEl.classList.toggle('visible', !!msg);
+    input.classList.toggle('invalid', !!msg);
+    input.classList.toggle('valid', !msg && input.value.trim() !== '');
+    return !msg;
+}
+
+/* Run all VALIDATORS before generate */
+function validateForm() {
+    const ids = ['fullName', 'jobTitle', 'phone', 'email', 'whatsapp', 'linkedinUrl'];
+    let valid = true;
+    ids.forEach((id) => {
+        if (!validateField(id)) valid = false;
+    });
+    return valid;
+}
+
+/*
+ * getFormData()
+ * KYA: form ke saare inputs ek object mein
+ * USE: .value, .checked, querySelectorAll checked social checkboxes
+ * RETURNS: { name, title, phone, email, template, includeDisclaimer, socialPlatforms[] }
+ * Har template function isi object se HTML banati hai
+ */
+function getFormData() {
+    const socialPlatforms = Array.from(
+        document.querySelectorAll('#socialToggles input:checked')
+    ).map((el) => el.value);
+
+    const websiteKey = document.getElementById('websiteUrl').value;
+    const website = getWebsiteConfig(websiteKey);
+
+    return {
+        name: document.getElementById('fullName').value.trim(),
+        title: document.getElementById('jobTitle').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        linkedinUrl: document.getElementById('linkedinUrl').value.trim(),
+        websiteKey,
+        websiteUrl: website.url,
+        websiteLabel: website.label,
+        template: document.getElementById('template').value,
+        emailMode: getPreviewEmailMode(),
+        includeDisclaimer: document.getElementById('includeDisclaimer').checked,
+        socialPlatforms
+    };
+}
+
+/* --- Generator page UI feedback --- */
+
+/* Success/error message under buttons; auto-hide after timeout */
+function showFeedback(message, type) {
+    const el = document.getElementById('feedback');
+    el.textContent = message;
+    el.className = 'feedback ' + type;
+    clearTimeout(showFeedback._timer);
+    showFeedback._timer = setTimeout(() => {
+        el.className = 'feedback';
+        el.textContent = '';
+    }, type === 'success' ? 6000 : 8000);
+}
+
+/* Toggle light/dark preview shell around #previewBox */
+function setPreviewMode(mode) {
+    const shell = document.getElementById('previewShell');
+    const box = document.getElementById('previewBox');
+    const btnLight = document.getElementById('btnPreviewLight');
+    const btnDark = document.getElementById('btnPreviewDark');
+    const isDark = mode === 'dark';
+
+    shell.classList.toggle('mode-light', !isDark);
+    shell.classList.toggle('mode-dark', isDark);
+    if (box) box.classList.toggle('is-dark-preview', isDark);
+    btnLight.classList.toggle('active', !isDark);
+    btnDark.classList.toggle('active', isDark);
+    btnLight.setAttribute('aria-pressed', String(!isDark));
+    btnDark.setAttribute('aria-pressed', String(isDark));
+
+    if (generatedHTML && validateForm()) {
+        generateSignature();
+    }
+}
+
+/* --- Main user actions: generate, copy, download --- */
+
+/*
+ * generateSignature() — USER CLICKS "Generate Signature"
+ * 1) validateForm() — sab required fields OK?
+ * 2) getFormData() — form → JS object
+ * 3) buildSignature(data) → HTML string
+ * 4) buildOutlookDocument() → full .htm for download
+ * 5) previewBox.innerHTML = show preview
+ * 6) show copy buttons + help box
+ */
+function generateSignature() {
+    if (!validateForm()) {
+        showFeedback('Please fix the highlighted fields before generating.', 'error');
+        return;
+    }
+
+    const data = getFormData();
+    generatedHTML = buildSignature(data);
+    outlookHTML = buildOutlookDocument(generatedHTML);
+
+    document.getElementById('previewBox').innerHTML = generatedHTML;
+    document.getElementById('actionButtons').hidden = false;
+    document.getElementById('copyHelp').classList.add('visible');
+    showFeedback('Signature generated successfully. Use Copy for Outlook to paste.', 'success');
+}
+
+/* Download tattvam-signature.htm (full outlookHTML document) */
+function downloadOutlook() {
+    if (!outlookHTML) {
+        showFeedback('Generate a signature first.', 'error');
+        return;
+    }
+    const blob = new Blob([outlookHTML], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tattvam-signature.htm';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showFeedback('Downloaded .htm file. Open in browser, Ctrl+A, Ctrl+C, then paste into Outlook.', 'success');
+}
+
+/* Copy raw generatedHTML string to clipboard (plain text) */
+function copyHTML() {
+    if (!generatedHTML) {
+        showFeedback('Generate a signature first.', 'error');
+        return;
+    }
+    navigator.clipboard.writeText(generatedHTML).then(() => {
+        showFeedback('HTML code copied. Paste into Gmail signature HTML mode or developer tools.', 'success');
+    }).catch(() => fallbackCopy(generatedHTML));
+}
+
+/*
+ * copyForOutlook()
+ * KYA: formatted signature clipboard mein — Outlook paste par styling rahe
+ * TRY 1: navigator.clipboard.write(ClipboardItem) — text/html + text/plain MIME
+ * TRY 2: fallbackRichCopy — hidden contenteditable + execCommand('copy')
+ * KYU: plain text copy se Outlook formatting lose; rich HTML chahiye
+ * INTERVIEW: "Tested copy path because Clipboard API not in all browsers"
+ */
+function getOutlookClipboardHtml() {
+    return getOutlookClipboardBody();
+}
+
+function getOutlookClipboardBody() {
+    if (!outlookHTML) return generatedHTML;
+    const match = outlookHTML.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    return match ? match[1].trim() : generatedHTML;
+}
+
+function copyForOutlook() {
+    if (!generatedHTML) {
+        showFeedback('Generate a signature first.', 'error');
+        return;
+    }
+    const copyHtml = getOutlookClipboardHtml();
+    if (navigator.clipboard && window.ClipboardItem) {
+        try {
+            const htmlBlob = new Blob([copyHtml], { type: 'text/html' });
+            const textBlob = new Blob([document.getElementById('previewBox').innerText], { type: 'text/plain' });
+            const item = new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob });
+            navigator.clipboard.write([item]).then(() => {
+                showFeedback('Copied for Outlook. File → Options → Mail → Signatures → New → Ctrl+V.', 'success');
+            }).catch(fallbackRichCopy);
+            return;
+        } catch {
+            /* continue to fallback */
+        }
+    }
+    fallbackRichCopy();
+}
+
+/* Hidden contenteditable + document.execCommand('copy') if Clipboard API fails */
+function fallbackRichCopy() {
+    const box = document.getElementById('previewBox');
+    const hidden = document.createElement('div');
+    hidden.setAttribute('contenteditable', 'true');
+    hidden.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+    hidden.innerHTML = box && box.innerHTML ? box.innerHTML : getOutlookClipboardBody();
+    document.body.appendChild(hidden);
+
+    const range = document.createRange();
+    range.selectNodeContents(hidden);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+
+    sel.removeAllRanges();
+    document.body.removeChild(hidden);
+
+    if (!ok) {
+        range.selectNodeContents(box);
+        sel.addRange(range);
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        sel.removeAllRanges();
+    }
+
+    showFeedback(
+        ok ? 'Copied for Outlook. Paste with Ctrl+V in the signature editor.' : 'Copy failed — use Download .htm instead.',
+        ok ? 'success' : 'error'
+    );
+}
+
+/* Plain textarea copy fallback for copyHTML */
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;left:-9999px;';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showFeedback('HTML copied to clipboard.', 'success');
+}
+
+/* --- Wire buttons and live updates (page load) --- */
+
+document.getElementById('btnGenerate').addEventListener('click', generateSignature);
+
+document.getElementById('btnCopyOutlook').addEventListener('click', copyForOutlook);
+document.getElementById('btnDownload').addEventListener('click', downloadOutlook);
+document.getElementById('btnCopyHtml').addEventListener('click', copyHTML);
+
+document.getElementById('btnPreviewLight').addEventListener('click', () => setPreviewMode('light'));
+document.getElementById('btnPreviewDark').addEventListener('click', () => setPreviewMode('dark'));
+
+Object.keys(VALIDATORS).forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) {
+        input.addEventListener('blur', () => validateField(id));
+        input.addEventListener('input', () => {
+            if (document.getElementById('err-' + id).classList.contains('visible')) {
+                validateField(id);
+            }
+        });
+    }
+});
+
+document.getElementById('sigForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    generateSignature();
+});
+
+/* Re-run generateSignature when template/disclaimer/social toggles change */
+function attachLiveUpdate(el) {
+    el.addEventListener('change', () => {
+        if (generatedHTML && validateForm()) generateSignature();
+    });
+}
+attachLiveUpdate(document.getElementById('template'));
+attachLiveUpdate(document.getElementById('includeDisclaimer'));
+attachLiveUpdate(document.getElementById('websiteUrl'));
+document.querySelectorAll('#socialToggles input').forEach((cb) => attachLiveUpdate(cb));
+
+/* Debounce typing — regenerate 400ms after user stops (if already generated) */
+let regenTimer;
+function scheduleRegenerate() {
+    clearTimeout(regenTimer);
+    regenTimer = setTimeout(() => {
+        if (generatedHTML && validateForm()) generateSignature();
+    }, 400);
+}
+['fullName', 'jobTitle', 'phone', 'whatsapp', 'email', 'linkedinUrl'].forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.addEventListener('input', scheduleRegenerate);
+});
+/*
+ * ========== INTERVIEW QUICK REVISION (signature-project) ==========
+ *
+ * BUILDERS (string HTML): buildBrandColumn, buildContactGrid, buildSocialIcons,
+ *   wrapSignature, templateClassic | templateExecutive | templateCompact
+ *
+ * VALIDATION: VALIDATORS object, validateField, validateForm
+ *
+ * OUTPUT ACTIONS: generateSignature → copyForOutlook | downloadOutlook | copyHTML
+ *
+ * Agar puche "Outlook problem?": Word HTML engine, tables only, inline CSS,
+ *   VML buttons, absolute images, white background for dark mode
+ *
+ * Agar puche "improve?": Test real Outlook desktop, host icons on Tattvam CDN not Flaticon,
+ *   add preview in real Gmail iframe, unit tests for escapeHtml
+ * ================================================================
+ */
+</script>
+</body>
+</html>
