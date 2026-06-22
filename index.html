@@ -277,8 +277,15 @@
             border-radius: 10px;
             padding: 28px 24px;
             min-height: 220px;
+            max-width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             transition: background 0.3s, box-shadow 0.3s;
+        }
+        .preview-box .sig-wrap,
+        .preview-box #sig-root {
+            width: 100% !important;
+            max-width: 100% !important;
         }
         /* Dark email: outer area dark, signature white card floats on top (real client behaviour) */
         .preview-shell.mode-dark .preview-box {
@@ -288,6 +295,19 @@
         }
         .preview-shell.mode-dark .preview-box > table {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+        }
+        .preview-shell.mode-dark .sig-dark-header,
+        .sig-dark-header {
+            background-color: #0B1F3A !important;
+            background-image: linear-gradient(#0B1F3A, #0B1F3A) !important;
+        }
+        .preview-shell.mode-dark .sig-dark-header .sig-name-text {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+        .preview-shell.mode-dark .sig-dark-header .sig-title-text {
+            color: #42d9e4 !important;
+            -webkit-text-fill-color: #42d9e4 !important;
         }
         .preview-shell.mode-dark .preview-placeholder {
             color: #9ca3af;
@@ -375,9 +395,11 @@
             .form-row { grid-template-columns: 1fr; }
             .action-btn { min-width: 100%; flex: 1 1 100%; }
             .preview-header { flex-direction: column; align-items: flex-start; }
+            .container { margin: 20px auto 32px; gap: 20px; }
         }
         @media (max-width: 480px) {
             .form-section, .preview-shell { padding: 18px 14px; }
+            .preview-box { padding: 14px 8px; }
             .header h1 { font-size: 1.15rem; }
         }
     </style>
@@ -487,7 +509,7 @@
     </div>
 
     <div class="preview-shell mode-light" id="previewShell">
-      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — logos use PNG for Outlook compatibility. Use Copy for Outlook or Download .htm before pasting.</p>
+      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — Design 3 navy header stays dark. Copy for Outlook uses PNG logo so images paste correctly.</p>
       <!-- Generated signature HTML injected here by generateSignature() -->
       <div class="preview-box" id="previewBox">
         <p class="preview-placeholder">Fill in your details and click Generate</p>
@@ -543,6 +565,11 @@ const BRAND = {
 };
 
 const FONT = "Arial,Helvetica,'Segoe UI',sans-serif";
+
+const HEADER_NAME_STYLE = `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:-0.2px;mso-color-alt:${BRAND.navy};`;
+const HEADER_TITLE_STYLE = `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`;
+const LUXURY_HEADER_NAME_STYLE = `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.white};line-height:1.2;mso-color-alt:${BRAND.white};`;
+const LUXURY_HEADER_TITLE_STYLE = `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.4;padding-top:6px;mso-color-alt:${BRAND.teal};`;
 
 const COMPANY_TAGLINE = 'Regulated Broker &nbsp;&middot;&nbsp; Dubai, UAE';
 const COMPANY_ADDRESS = 'Office 5103, 51st Floor, Aspin Commercial Tower, Sheikh Zayed Road, Dubai, UAE';
@@ -649,7 +676,6 @@ function buildSvgLogoBlock(websiteUrl, options) {
 
 function buildLogoForTemplate(data, logoOpts) {
     const opts = logoOpts || {};
-    const isDark = data.emailMode === 'dark';
     const tpl = data.template;
 
     if (tpl === 'corporate' || tpl === 'institution') {
@@ -657,12 +683,58 @@ function buildLogoForTemplate(data, logoOpts) {
     }
 
     if (tpl === 'luxury') {
-        return isDark
-            ? buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 185 })
-            : buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 190 });
+        return buildWhiteSvgLogoBlock(data.websiteUrl, { width: opts.width || 175 });
     }
 
     return buildCorporateLogoBlock(data.websiteUrl, opts);
+}
+
+function buildWhiteSvgLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const w = opts.width || 175;
+    const h = Math.round(w * 0.22);
+    const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    const src = opts.forOutlook ? LOGO_CORPORATE_URL : LOGO_FULL_URL;
+    const imgW = opts.forOutlook ? 165 : w;
+    const imgH = opts.forOutlook ? Math.round(imgW * 0.26) : h;
+    return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
+      <img src="${src}" alt="Tattvam Markets" width="${imgW}" height="${imgH}"
+        border="0" class="sig-logo-img sig-logo-white"
+        style="display:block;width:100%;max-width:${imgW}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+    </a>`;
+}
+
+function buildLuxuryDarkHeader(data, forOutlook) {
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const logoHtml = buildWhiteSvgLogoBlock(data.websiteUrl, { width: 175, forOutlook: forOutlook });
+    const navyBg = buildAntiInvertBg(BRAND.navy);
+
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+      <tr>
+        <td class="sig-lux-header sig-dark-header" bgcolor="${BRAND.navy}" data-ogsb="${BRAND.navy}"
+          style="${navyBg}padding:20px 24px 18px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+            <tr>
+              <td class="sig-lux-name" align="left" valign="middle" width="54%" style="width:54%;vertical-align:middle;padding-right:16px;">
+                <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td class="sig-name-text" data-ogsc="${BRAND.white}" style="padding:0;${LUXURY_HEADER_NAME_STYLE}">${name}</td>
+                  </tr>
+                  <tr>
+                    <td class="sig-title-text" data-ogsc="${BRAND.teal}" style="padding:0;${LUXURY_HEADER_TITLE_STYLE}">${title}</td>
+                  </tr>
+                </table>
+              </td>
+              <td class="sig-lux-logo" align="right" valign="middle" width="46%" style="width:46%;vertical-align:middle;">
+                ${logoHtml}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
 }
 
 function buildCorporateLogoBlock(websiteUrl, options) {
@@ -670,13 +742,13 @@ function buildCorporateLogoBlock(websiteUrl, options) {
     const w = opts.width || 190;
     const url = websiteUrl || WEBSITE_OPTIONS.com.url;
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
-      <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;">
+      <table cellpadding="0" cellspacing="0" border="0" align="right" class="sig-header-logo-table" style="border-collapse:collapse;">
         <tr>
           <td align="center" valign="middle" bgcolor="${BRAND.white}"
-            style="${buildAntiInvertBg(BRAND.white)}padding:6px 10px;">
+            style="${buildAntiInvertBg(BRAND.white)}padding:5px 8px;border:1px solid ${BRAND.border};">
             <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${w}" height="${Math.round(w * 0.26)}"
-              border="0"
-              style="display:block;width:${w}px;height:auto;max-width:${w}px;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+              border="0" class="sig-logo-img"
+              style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
           </td>
         </tr>
       </table>
@@ -735,18 +807,18 @@ function buildHeaderRow(data, style) {
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
       <tr>
-        <td align="left" valign="top" width="56%" style="width:56%;vertical-align:top;padding:0 20px 0 0;">
+        <td class="sig-header-name" align="left" valign="top" width="56%" style="width:56%;vertical-align:top;padding:0 20px 0 0;">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td style="padding:0;${nameStyle}">${name}</td>
+              <td class="sig-name-text" style="padding:0;${nameStyle}">${name}</td>
             </tr>
             <tr>
-              <td style="padding:0;${titleStyle}">${title}</td>
+              <td class="sig-title-text" style="padding:0;${titleStyle}">${title}</td>
             </tr>
             ${style.showTagline ? `<tr><td style="padding:0;${taglineStyle}">${COMPANY_TAGLINE}</td></tr>` : ''}
           </table>
         </td>
-        <td align="right" valign="top" width="44%" style="width:44%;vertical-align:top;padding:0;">
+        <td class="sig-header-logo" align="right" valign="top" width="44%" style="width:44%;vertical-align:top;padding:0;">
           ${logoHtml}
         </td>
       </tr>
@@ -758,6 +830,68 @@ function buildDivider() {
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:18px 0 16px;">
       <tr>
         <td style="border-bottom:1px solid ${BRAND.border};font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildTopAccentBar(color, height) {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td bgcolor="${color}" style="background-color:${color};background-image:linear-gradient(${color},${color});height:${height}px;font-size:0;line-height:0;mso-color-alt:${color};">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildNameAccentLine(color) {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:12px;">
+      <tr>
+        <td width="52" bgcolor="${color}" style="width:52px;height:3px;background-color:${color};font-size:0;line-height:0;mso-color-alt:${color};">&nbsp;</td>
+        <td style="font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildInstitutionDivider() {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:18px 0 16px;">
+      <tr>
+        <td bgcolor="${BRAND.teal}" style="background-color:${BRAND.teal};height:2px;font-size:0;line-height:0;mso-color-alt:${BRAND.teal};">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildContactPanel(contactHtml, accentColor) {
+    const color = accentColor || BRAND.teal;
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td style="border-left:3px solid ${color};padding:2px 0 2px 16px;mso-border-left-alt:3px solid ${color};">
+          ${contactHtml}
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildTaglineBadge(text) {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td bgcolor="${BRAND.offWhite}" style="${buildAntiInvertBg(BRAND.offWhite)}border-left:3px solid ${BRAND.teal};padding:9px 14px;font-family:${FONT};font-size:11px;font-weight:600;color:${BRAND.navy};letter-spacing:0.4px;text-transform:uppercase;mso-color-alt:${BRAND.navy};">
+          ${text}
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildAddressPanel(text) {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td class="sig-address" bgcolor="${BRAND.grayBg}" style="${buildAntiInvertBg(BRAND.grayBg)}border-left:3px solid ${BRAND.navy};padding:12px 14px;font-family:${FONT};font-size:11px;color:${BRAND.textMuted};line-height:1.55;mso-color-alt:${BRAND.textMuted};">
+          ${text}
+        </td>
       </tr>
     </table>`;
 }
@@ -791,7 +925,7 @@ function buildContactGrid(data) {
     rows += buildContactRow('Web', `<a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${webStyle}">${websiteLabel}</a>`);
 
     return `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+    <table class="sig-contact" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
       ${rows}
     </table>`;
 }
@@ -822,12 +956,59 @@ function buildAntiInvertBg(color) {
     return `background-color:${color};background-image:linear-gradient(${color},${color});mso-color-alt:${color};`;
 }
 
+function buildResponsiveStyles() {
+    return `<style type="text/css">
+      #sig-root, .sig-wrap { width: 100% !important; max-width: 620px !important; }
+      img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+        .sig-logo-img { width: 100%; max-width: 190px; height: auto; display: block; }
+        .sig-logo-white { max-width: 175px; }
+        .sig-dark-header { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
+        .sig-dark-header .sig-name-text { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; mso-color-alt: #ffffff; }
+        .sig-dark-header .sig-title-text { color: #42d9e4 !important; -webkit-text-fill-color: #42d9e4 !important; }
+      a { word-break: break-word; }
+      @media only screen and (max-width: 520px) {
+        .sig-wrap { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+        .sig-pad-top { padding: 16px 14px 0 14px !important; }
+        .sig-pad-body { padding: 0 14px 16px 14px !important; }
+        .sig-pad-mid { padding: 16px 14px !important; }
+        .sig-lux-header { padding: 16px 14px 14px !important; }
+        .sig-header-name, .sig-header-logo,
+        .sig-lux-name, .sig-lux-logo {
+          display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .sig-header-name { padding-right: 0 !important; }
+        .sig-header-logo { text-align: left !important; padding-top: 14px !important; }
+        .sig-lux-name { padding-right: 0 !important; padding-bottom: 12px !important; }
+        .sig-lux-logo { text-align: left !important; }
+        .sig-logo-img { max-width: 160px !important; width: 100% !important; height: auto !important; }
+        .sig-logo-white { max-width: 150px !important; }
+        .sig-name-text { font-size: 20px !important; line-height: 1.25 !important; }
+        .sig-title-text { font-size: 15px !important; line-height: 1.4 !important; }
+        .sig-contact td, .sig-contact a, .sig-contact span {
+          font-size: 13px !important;
+          line-height: 1.65 !important;
+          word-break: break-word !important;
+        }
+        .sig-cta-wrap { width: 100% !important; max-width: 100% !important; }
+        .sig-cta-wrap table { width: 100% !important; max-width: 100% !important; }
+        .sig-cta-btn { display: block !important; width: 100% !important; max-width: 100% !important; text-align: center !important; box-sizing: border-box !important; }
+        .sig-cta-link { display: block !important; width: 100% !important; max-width: 100% !important; text-align: center !important; box-sizing: border-box !important; padding-left: 16px !important; padding-right: 16px !important; }
+        .sig-social-pad { padding: 14px !important; }
+        .sig-disclaimer { padding: 12px !important; font-size: 9px !important; line-height: 1.55 !important; }
+        .sig-address { font-size: 11px !important; line-height: 1.5 !important; }
+      }
+    </style>`;
+}
+
 function buildCTAHtml(portalUrl) {
     const bg = BRAND.teal;
     const bgStyle = buildAntiInvertBg(bg);
-    return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+    return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" class="sig-cta-wrap" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:320px;">
       <tr>
-        <td align="left" style="padding:0;">
+        <td align="left" class="sig-cta-wrap" style="padding:0;width:100%;">
           <!--[if mso]>
           <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:42px;v-text-anchor:middle;width:205px;" arcsize="0%" stroke="f" fillcolor="${bg}">
             <w:anchorlock/>
@@ -835,10 +1016,10 @@ function buildCTAHtml(portalUrl) {
           </v:roundrect>
           <![endif]-->
           <!--[if !mso]><!-->
-          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;width:100%;">
             <tr>
-              <td align="center" valign="middle" bgcolor="${bg}" style="${bgStyle}border:1px solid ${bg};">
-                <a href="${portalUrl}" target="_blank"
+              <td align="center" valign="middle" bgcolor="${bg}" class="sig-cta-btn" style="${bgStyle}border:1px solid ${bg};width:100%;">
+                <a href="${portalUrl}" target="_blank" class="sig-cta-link"
                   style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;color:#ffffff !important;text-decoration:none;letter-spacing:1px;line-height:14px;mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;">
                   <span style="color:#ffffff !important;mso-style-textfill-fill-color:#ffffff;mso-style-textfill-type:solid;">CLIENT PORTAL</span>
                 </a>
@@ -879,17 +1060,18 @@ function buildSocialIcons(data, style) {
     }).join('');
 
     const labelColor = st.labelColor || BRAND.textMuted;
-    const bgColor = st.footerBg ? BRAND.grayBg : (st.bgColor || 'transparent');
+    const bgColor = st.footerBgColor || (st.footerBg ? BRAND.grayBg : (st.bgColor || 'transparent'));
     const topBorder = st.topBorder && !st.footerBg ? `border-top:1px solid ${st.topBorder};` : '';
     const cellPad = st.footerBg ? 'padding:16px 22px 18px;' : 'padding:18px 0 0 0;';
+    const cellClass = st.footerBg ? 'sig-social-pad' : '';
 
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:0;">
       <tr>
-        <td bgcolor="${bgColor}" style="background-color:${bgColor};${cellPad}${topBorder}mso-color-alt:${bgColor};">
+        <td class="${cellClass}" bgcolor="${bgColor}" style="background-color:${bgColor};background-image:linear-gradient(${bgColor},${bgColor});${cellPad}${topBorder}mso-color-alt:${bgColor};">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td style="padding:0 0 10px 0;font-family:${FONT};font-size:10px;font-weight:bold;color:${BRAND.navy};text-transform:uppercase;letter-spacing:1px;mso-color-alt:${BRAND.navy};">
+              <td style="padding:0 0 10px 0;font-family:${FONT};font-size:10px;font-weight:bold;color:${labelColor};text-transform:uppercase;letter-spacing:1px;mso-color-alt:${labelColor};">
                 Connect with us
               </td>
             </tr>
@@ -908,7 +1090,7 @@ function buildDisclaimerBlock() {
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:18px;">
       <tr>
-        <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border:1px solid ${BRAND.border};padding:14px 16px;font-family:${FONT};font-size:10px;color:${BRAND.text};line-height:1.6;mso-color-alt:${BRAND.text};">
+        <td class="sig-disclaimer" bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border:1px solid ${BRAND.border};padding:14px 16px;font-family:${FONT};font-size:10px;color:${BRAND.text};line-height:1.6;mso-color-alt:${BRAND.text};">
           ${DISCLAIMER_TEXT}
         </td>
       </tr>
@@ -920,9 +1102,9 @@ function wrapSignature(innerHtml, width, options) {
     const disclaimerHtml = opts.includeDisclaimer ? buildDisclaimerBlock() : '';
     const w = width || 600;
 
-    return `
-<table cellpadding="0" cellspacing="0" border="0" width="${w}" bgcolor="${BRAND.white}"
-  style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.text};max-width:${w}px;width:100%;border-collapse:collapse;${buildAntiInvertBg(BRAND.white)}mso-table-lspace:0pt;mso-table-rspace:0pt;">
+    return `${buildResponsiveStyles()}
+<table id="sig-root" class="sig-wrap" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${BRAND.white}"
+  style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.text};width:100%;max-width:${w}px;border-collapse:collapse;${buildAntiInvertBg(BRAND.white)}mso-table-lspace:0pt;mso-table-rspace:0pt;">
   <tr>
     <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}${opts.outerStyle || ''}">
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
@@ -943,8 +1125,8 @@ function templateCorporate(data) {
     const header = buildHeaderRow(data, {
         logoOpts: { width: 195 },
         showTagline: false,
-        nameStyle: `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:-0.2px;mso-color-alt:${BRAND.navy};`,
-        titleStyle: `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
+        nameStyle: HEADER_NAME_STYLE,
+        titleStyle: HEADER_TITLE_STYLE
     });
 
     const inner = `
@@ -954,18 +1136,22 @@ function templateCorporate(data) {
         <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 22px;">
+              <td style="padding:0;line-height:0;font-size:0;">${buildTopAccentBar(BRAND.teal, 3)}</td>
+            </tr>
+            <tr>
+              <td class="sig-pad-top" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 24px;">
                 ${header}
+                ${buildNameAccentLine(BRAND.teal)}
               </td>
             </tr>
             <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 22px 22px;">
+              <td class="sig-pad-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 24px 24px;">
                 ${buildDivider()}
-                ${buildContactGrid(data)}
+                ${buildContactPanel(buildContactGrid(data), BRAND.teal)}
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                   <tr>
-                    <td style="padding:18px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
-                      ${COMPANY_TAGLINE}
+                    <td style="padding:18px 0 10px 0;">
+                      ${buildTaglineBadge(COMPANY_TAGLINE)}
                     </td>
                   </tr>
                   <tr><td style="padding:4px 0 0 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
@@ -973,7 +1159,7 @@ function templateCorporate(data) {
               </td>
             </tr>
             <tr>
-              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};mso-color-alt:${BRAND.grayBg};">
+              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border-top:1px solid ${BRAND.border};mso-color-alt:${BRAND.grayBg};">
                 ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.navy })}
               </td>
             </tr>
@@ -987,45 +1173,50 @@ function templateCorporate(data) {
 
 /* Design 2 — Premium Financial Institution */
 function templateInstitution(data) {
+    const instNameStyle = `font-family:Georgia,'Times New Roman',${FONT};font-size:25px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:0.2px;mso-color-alt:${BRAND.navy};`;
     const header = buildHeaderRow(data, {
-        logoOpts: { width: 185 },
+        logoOpts: { width: 190 },
         showTagline: false,
-        nameStyle: `font-family:Georgia,'Times New Roman',${FONT};font-size:25px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:0.1px;mso-color-alt:${BRAND.navy};`,
-        titleStyle: `font-family:${FONT};font-size:16px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
+        nameStyle: instNameStyle,
+        titleStyle: HEADER_TITLE_STYLE
     });
 
     const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
       <tr>
         <td width="4" bgcolor="${BRAND.navy}" style="width:4px;background-color:${BRAND.navy};font-size:0;line-height:0;">&nbsp;</td>
         <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 20px 22px;border-bottom:2px solid ${BRAND.teal};">
+              <td style="padding:0;line-height:0;font-size:0;">${buildTopAccentBar(BRAND.navy, 5)}</td>
+            </tr>
+            <tr>
+              <td class="sig-pad-top" bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};padding:22px 26px 20px 24px;border-bottom:2px solid ${BRAND.teal};mso-color-alt:${BRAND.grayBg};">
                 ${header}
               </td>
             </tr>
             <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 26px 22px 22px;">
-                ${buildContactGrid(data)}
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:12px;">
+              <td class="sig-pad-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 24px 24px;">
+                ${buildInstitutionDivider()}
+                ${buildContactPanel(buildContactGrid(data), BRAND.navy)}
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:14px;">
                   <tr>
-                    <td style="padding:0 0 10px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.55;mso-color-alt:${BRAND.textMuted};">
-                      ${COMPANY_ADDRESS}
+                    <td style="padding:0 0 12px 0;">
+                      ${buildAddressPanel(COMPANY_ADDRESS)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:0 0 14px 0;font-family:${FONT};font-size:12px;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
+                    <td style="padding:0 0 14px 0;font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
                       ${COMPANY_TAGLINE}
                     </td>
                   </tr>
-                  <tr><td style="padding:0 0 0 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                  <tr><td style="padding:0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
                 </table>
               </td>
             </tr>
             <tr>
-              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};mso-color-alt:${BRAND.grayBg};">
-                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.navy })}
+              <td bgcolor="${BRAND.navy}" style="background-color:${BRAND.navy};border-top:2px solid ${BRAND.teal};mso-color-alt:${BRAND.navy};">
+                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.white, footerBgColor: BRAND.navy })}
               </td>
             </tr>
           </table>
@@ -1037,59 +1228,10 @@ function templateInstitution(data) {
 }
 
 /* Design 3 — Luxury Fintech Card */
-function templateLuxury(data) {
-    const isDark = data.emailMode === 'dark';
-
-    if (isDark) {
-        const header = buildHeaderRow(data, {
-            logoOpts: { width: 185 },
-            showTagline: false,
-            nameStyle: `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;mso-color-alt:${BRAND.navy};`,
-            titleStyle: `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`
-        });
-
-        const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
-      <tr>
-        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
-        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-            <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 22px;">
-                ${header}
-              </td>
-            </tr>
-            <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 22px 22px;">
-                ${buildDivider()}
-                ${buildContactGrid(data)}
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-                  <tr>
-                    <td style="padding:14px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
-                      ${COMPANY_TAGLINE}
-                    </td>
-                  </tr>
-                  <tr><td style="padding:6px 0 8px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
-                </table>
-                ${buildSocialIcons(data, {
-                    topBorder: BRAND.border,
-                    labelColor: BRAND.navy,
-                    iconSize: 32,
-                    imgSize: 16
-                })}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>`;
-
-        return wrapSignature(inner, 640, { includeDisclaimer: data.includeDisclaimer });
-    }
-
-    const name = escapeHtml(data.name);
-    const title = escapeHtml(data.title);
-    const logoBlock = buildCorporateLogoBlock(data.websiteUrl, { width: 190 });
+function templateLuxury(data, options) {
+    const opts = options || {};
+    const forOutlook = !!opts.forOutlook;
+    const header = buildLuxuryDarkHeader(data, forOutlook);
 
     const inner = `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
@@ -1098,36 +1240,18 @@ function templateLuxury(data) {
         <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td bgcolor="${BRAND.navy}" style="background-color:${BRAND.navy};padding:20px 24px 18px;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-                  <tr>
-                    <td align="left" valign="middle" width="54%" style="width:54%;vertical-align:middle;padding-right:16px;">
-                      <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
-                        <tr>
-                          <td style="font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.white};line-height:1.2;mso-color-alt:${BRAND.white};">${name}</td>
-                        </tr>
-                        <tr>
-                          <td style="padding-top:6px;font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.4;mso-color-alt:${BRAND.teal};">${title}</td>
-                        </tr>
-                      </table>
-                    </td>
-                    <td align="right" valign="middle" width="46%" style="width:46%;vertical-align:middle;">
-                      ${logoBlock}
-                    </td>
-                  </tr>
-                </table>
-              </td>
+              <td style="padding:0;line-height:0;font-size:0;">${header}</td>
             </tr>
             <tr>
-              <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 24px 22px 20px;">
+              <td class="sig-pad-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 24px 24px 24px;">
                 ${buildContactGrid(data)}
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                   <tr>
-                    <td style="padding:14px 0 6px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
+                    <td style="padding:16px 0 8px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
                       ${COMPANY_TAGLINE}
                     </td>
                   </tr>
-                  <tr><td style="padding:6px 0 8px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
+                  <tr><td style="padding:2px 0 10px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
                 </table>
                 ${buildSocialIcons(data, {
                     topBorder: BRAND.border,
@@ -1142,7 +1266,7 @@ function templateLuxury(data) {
       </tr>
     </table>`;
 
-    return wrapSignature(inner, 640, { includeDisclaimer: data.includeDisclaimer });
+    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
 }
 
 const TEMPLATES = {
@@ -1157,9 +1281,9 @@ const TEMPLATES = {
  * TEMPLATES object maps name → function
  * RETURNS: complete HTML string → preview + clipboard
  */
-function buildSignature(data) {
+function buildSignature(data, options) {
     const fn = TEMPLATES[data.template] || TEMPLATES.corporate;
-    return fn(data);
+    return fn(data, options || {});
 }
 
 /* Wraps signature in full HTML doc + color-scheme meta for downloaded .htm file */
@@ -1169,6 +1293,7 @@ function buildOutlookDocument(bodyHtml) {
   xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="Generator" content="Tattvam Signature Generator">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
@@ -1182,9 +1307,11 @@ function buildOutlookDocument(bodyHtml) {
 <![endif]-->
 <style>
   :root { color-scheme: light only; supported-color-schemes: light; }
+  body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 </style>
+${buildResponsiveStyles()}
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
+<body style="margin:0;padding:0;background-color:#ffffff;width:100%;">
 ${bodyHtml}
 </body>
 </html>`;
@@ -1333,7 +1460,7 @@ function generateSignature() {
 
     const data = getFormData();
     generatedHTML = buildSignature(data);
-    outlookHTML = buildOutlookDocument(generatedHTML);
+    outlookHTML = buildOutlookDocument(buildSignature(data, { forOutlook: true }));
 
     document.getElementById('previewBox').innerHTML = generatedHTML;
     document.getElementById('actionButtons').hidden = false;
@@ -1416,7 +1543,7 @@ function fallbackRichCopy() {
     const hidden = document.createElement('div');
     hidden.setAttribute('contenteditable', 'true');
     hidden.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
-    hidden.innerHTML = box && box.innerHTML ? box.innerHTML : getOutlookClipboardBody();
+    hidden.innerHTML = getOutlookClipboardBody() || (box && box.innerHTML ? box.innerHTML : '');
     document.body.appendChild(hidden);
 
     const range = document.createRange();
