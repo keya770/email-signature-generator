@@ -309,36 +309,11 @@
             color: #42d9e4 !important;
             -webkit-text-fill-color: #42d9e4 !important;
         }
-        /* Design 3 — dark email preview: navy header + dark body (matches Outlook/Gmail dark) */
-        .preview-shell.mode-dark .preview-box .sig-lux-header,
-        .preview-shell.mode-dark .preview-box .sig-lux-header td,
-        .preview-shell.mode-dark .preview-box .sig-lux-name,
-        .preview-shell.mode-dark .preview-box .sig-lux-logo {
+        /* Design 3 — dark email preview: navy left panel stays dark */
+        .preview-shell.mode-dark .preview-box .sig-left-panel,
+        .preview-shell.mode-dark .preview-box .sig-left-panel td {
             background-color: #0B1F3A !important;
             background-image: linear-gradient(#0B1F3A, #0B1F3A) !important;
-        }
-        .preview-shell.mode-dark .preview-box .sig-lux-body,
-        .preview-shell.mode-dark .preview-box .sig-lux-body > table,
-        .preview-shell.mode-dark .preview-box .sig-lux-body td {
-            background-color: #222222 !important;
-            background-image: linear-gradient(#222222, #222222) !important;
-        }
-        .preview-shell.mode-dark .preview-box .sig-lux-body .sig-contact a {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-        }
-        .preview-shell.mode-dark .preview-box .sig-lux-body .sig-contact span {
-            color: #999999 !important;
-            -webkit-text-fill-color: #999999 !important;
-        }
-        .preview-shell.mode-dark .preview-box .sig-lux-body .sig-social-pad,
-        .preview-shell.mode-dark .preview-box .sig-lux-body .sig-social-pad td {
-            background-color: #222222 !important;
-            background-image: linear-gradient(#222222, #222222) !important;
-        }
-        .preview-shell.mode-dark .preview-box .sig-lux-body .sig-social-pad table tr:first-child td {
-            color: #E2E8F0 !important;
-            -webkit-text-fill-color: #E2E8F0 !important;
         }
         .preview-shell.mode-dark .preview-placeholder {
             color: #9ca3af;
@@ -540,7 +515,7 @@
     </div>
 
     <div class="preview-shell mode-light" id="previewShell">
-      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — Design 3 navy header stays dark with white logo. Copy for Outlook uses the same white SVG logo.</p>
+      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — Design 3 navy left panel stays dark with white logo. Copy for Outlook uses PNG logo.</p>
       <!-- Generated signature HTML injected here by generateSignature() -->
       <div class="preview-box" id="previewBox">
         <p class="preview-placeholder">Fill in your details and click Generate</p>
@@ -723,11 +698,11 @@ function buildLogoForTemplate(data, logoOpts) {
     const tpl = data.template;
 
     if (tpl === 'corporate' || tpl === 'institution') {
-        return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 190 });
+        return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 175, forOutlook: opts.forOutlook });
     }
 
     if (tpl === 'luxury') {
-        return buildWhiteSvgLogoBlock(data.websiteUrl, { width: opts.width || 175 });
+        return buildWhiteSvgLogoBlock(data.websiteUrl, { width: opts.width || 175, forOutlook: opts.forOutlook });
     }
 
     return buildCorporateLogoBlock(data.websiteUrl, opts);
@@ -795,19 +770,14 @@ function buildLuxuryDarkHeader(data, forOutlook) {
 
 function buildCorporateLogoBlock(websiteUrl, options) {
     const opts = options || {};
-    const w = opts.width || 190;
+    const w = opts.width || 175;
     const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    const imgW = opts.forOutlook ? w * 2 : w;
+    const imgH = Math.round(imgW * 0.26);
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
-      <table cellpadding="0" cellspacing="0" border="0" align="right" class="sig-header-logo-table" style="border-collapse:collapse;">
-        <tr>
-          <td align="center" valign="middle" bgcolor="${BRAND.white}"
-            style="${buildAntiInvertBg(BRAND.white)}padding:5px 8px;border:1px solid ${BRAND.border};">
-            <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${w}" height="${Math.round(w * 0.26)}"
-              border="0" class="sig-logo-img"
-              style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
-          </td>
-        </tr>
-      </table>
+      <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${imgW}" height="${imgH}"
+        border="0" class="sig-logo-img"
+        style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
     </a>`;
 }
 
@@ -1008,13 +978,112 @@ function buildContactInline(data, separatorColor) {
     return line;
 }
 
+const SIG_LONG_WIDTH = 700;
+const CTA_LABEL = 'START TRADING';
+
+function buildLongLeftColumn(data, logoHtml, config) {
+    const cfg = config || {};
+    const bg = cfg.bg;
+    const bgStyle = bg ? buildAntiInvertBg(bg) : '';
+    const inner = `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr><td align="left" style="padding:0 0 16px 0;">${logoHtml}</td></tr>
+      <tr><td align="left" style="padding:0 0 12px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 200 })}</td></tr>
+      <tr><td align="left" style="padding:0;">${buildSocialIcons(data, {
+        compact: true,
+        iconSize: cfg.iconSize || 28,
+        imgSize: cfg.imgSize || 14
+    })}</td></tr>
+    </table>`;
+
+    if (bg) {
+        return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td class="sig-left-panel sig-dark-header" bgcolor="${bg}" data-ogsb="${bg}"
+          style="${bgStyle}padding:18px 14px;color-scheme:light only;">
+          ${inner}
+        </td>
+      </tr>
+    </table>`;
+    }
+    return inner;
+}
+
+function buildLongRightColumn(data, config) {
+    const cfg = config || {};
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const accent = cfg.contactAccent || BRAND.teal;
+    const separator = cfg.useInstitutionDivider ? buildInstitutionDivider() : `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:0;">
+      <tr>
+        <td style="border-bottom:1px solid ${BRAND.border};font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
+      </tr>
+    </table>`;
+
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr><td class="sig-name-text" style="padding:0;${cfg.nameStyle}">${name}</td></tr>
+      <tr><td class="sig-title-text" style="padding:0;${cfg.titleStyle}">${title}</td></tr>
+      <tr><td style="padding:12px 0 0 0;">${separator}</td></tr>
+      <tr>
+        <td style="padding:12px 0 0 0;">
+          ${buildContactPanel(buildContactGrid(data), accent)}
+        </td>
+      </tr>
+      ${cfg.extraRows || ''}
+    </table>`;
+}
+
+function buildLongSignatureInner(data, config, options) {
+    const cfg = config || {};
+    const forOutlook = !!(options && options.forOutlook);
+    const logoHtml = buildLogoForTemplate(data, { width: cfg.logoWidth || 175, forOutlook });
+    const leftCol = buildLongLeftColumn(data, logoHtml, cfg.left || {});
+    const rightCol = buildLongRightColumn(data, cfg.right || {});
+    const accentColor = cfg.accentColor || BRAND.teal;
+    const accentW = cfg.accentWidth || 4;
+    const dividerColor = cfg.dividerColor || BRAND.border;
+    const cardBg = cfg.cardBg || BRAND.white;
+    const cardBgStyle = buildAntiInvertBg(cardBg);
+
+    return `
+    <table class="sig-long-card ${cfg.cardClass || ''}" cellpadding="0" cellspacing="0" border="0" width="100%"
+      style="border-collapse:collapse;border:1px solid ${BRAND.border};width:100%;">
+      <tr>
+        <td width="${accentW}" bgcolor="${accentColor}" style="width:${accentW}px;background-color:${accentColor};font-size:0;line-height:0;mso-color-alt:${accentColor};">&nbsp;</td>
+        <td bgcolor="${cardBg}" style="${cardBgStyle}">
+          ${cfg.topBar || ''}
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td class="sig-pad-long" bgcolor="${cardBg}" style="${cardBgStyle}padding:22px 26px 24px 24px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+                  <tr>
+                    <td class="sig-col-left" valign="top" width="210" style="width:210px;min-width:180px;vertical-align:top;padding:0 22px 0 0;">
+                      ${leftCol}
+                    </td>
+                    <td class="sig-col-divider" width="1" valign="top" style="width:1px;border-left:1px solid ${dividerColor};font-size:0;line-height:0;mso-border-left-alt:1px solid ${dividerColor};">&nbsp;</td>
+                    <td class="sig-col-right" valign="top" style="vertical-align:top;padding:0 0 0 24px;">
+                      ${rightCol}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
 function buildAntiInvertBg(color) {
     return `background-color:${color};background-image:linear-gradient(${color},${color});mso-color-alt:${color};`;
 }
 
 function buildResponsiveStyles() {
     return `<style type="text/css">
-      #sig-root, .sig-wrap { width: 100% !important; max-width: 620px !important; }
+      #sig-root, .sig-wrap { width: 100% !important; max-width: ${SIG_LONG_WIDTH}px !important; }
       img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
         .sig-logo-img { width: 100%; max-width: 190px; height: auto; display: block; }
         .sig-logo-white { max-width: 175px; }
@@ -1037,10 +1106,27 @@ function buildResponsiveStyles() {
           .sig-lux-body .sig-contact span { color: #999999 !important; -webkit-text-fill-color: #999999 !important; }
           .sig-lux-body .sig-social-pad table tr:first-child td { color: #E2E8F0 !important; -webkit-text-fill-color: #E2E8F0 !important; }
           .sig-lux-name, .sig-lux-logo { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
+          .sig-left-panel, .sig-left-panel td { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
         }
       a { word-break: break-word; }
       @media only screen and (max-width: 520px) {
         .sig-wrap { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+        .sig-pad-long { padding: 16px 14px !important; }
+        .sig-col-left, .sig-col-right, .sig-col-divider {
+          display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .sig-col-left { padding: 0 0 16px 0 !important; }
+        .sig-col-divider {
+          border-left: none !important;
+          border-top: 1px solid #e0e0e0 !important;
+          padding: 16px 0 !important;
+          height: 1px !important;
+          line-height: 0 !important;
+        }
+        .sig-col-right { padding: 0 !important; }
         .sig-pad-top { padding: 16px 14px 0 14px !important; }
         .sig-pad-body { padding: 0 14px 16px 14px !important; }
         .sig-pad-mid { padding: 16px 14px !important; }
@@ -1076,25 +1162,28 @@ function buildResponsiveStyles() {
     </style>`;
 }
 
-function buildCTAHtml(portalUrl) {
+function buildCTAHtml(portalUrl, options) {
+    const opts = options || {};
+    const label = opts.label || CTA_LABEL;
+    const maxW = opts.maxWidth || 200;
     const bg = BRAND.teal;
     const bgStyle = buildAntiInvertBg(bg);
-    return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" class="sig-cta-wrap" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:320px;">
+    return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" class="sig-cta-wrap" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:${maxW}px;">
       <tr>
         <td align="left" class="sig-cta-wrap" style="padding:0;width:100%;">
           <!--[if mso]>
-          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:42px;v-text-anchor:middle;width:205px;" arcsize="0%" stroke="f" fillcolor="${bg}">
+          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:40px;v-text-anchor:middle;width:${maxW}px;" arcsize="0%" stroke="f" fillcolor="${bg}">
             <w:anchorlock/>
-            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1px;">CLIENT PORTAL</center>
+            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;">${label}</center>
           </v:roundrect>
           <![endif]-->
           <!--[if !mso]><!-->
-          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;width:100%;">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;width:100%;max-width:${maxW}px;">
             <tr>
               <td align="center" valign="middle" bgcolor="${bg}" class="sig-cta-btn" style="${bgStyle}border:1px solid ${bg};width:100%;">
                 <a href="${portalUrl}" target="_blank" class="sig-cta-link"
-                  style="display:inline-block;padding:13px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;color:#ffffff !important;text-decoration:none;letter-spacing:1px;line-height:14px;mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;">
-                  <span style="color:#ffffff !important;mso-style-textfill-fill-color:#ffffff;mso-style-textfill-type:solid;">CLIENT PORTAL</span>
+                  style="display:inline-block;padding:12px 18px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#ffffff !important;text-decoration:none;letter-spacing:1px;line-height:14px;mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;">
+                  <span style="color:#ffffff !important;mso-style-textfill-fill-color:#ffffff;mso-style-textfill-type:solid;">${label}</span>
                 </a>
               </td>
             </tr>
@@ -1135,19 +1224,21 @@ function buildSocialIcons(data, style) {
     const labelColor = st.labelColor || BRAND.textMuted;
     const bgColor = st.footerBgColor || (st.footerBg ? BRAND.grayBg : (st.bgColor || 'transparent'));
     const topBorder = st.topBorder && !st.footerBg ? `border-top:1px solid ${st.topBorder};` : '';
-    const cellPad = st.footerBg ? 'padding:16px 22px 18px;' : 'padding:18px 0 0 0;';
-    const cellClass = st.footerBg ? 'sig-social-pad' : '';
+    const cellPad = st.footerBg ? 'padding:16px 22px 18px;' : (st.compact ? 'padding:0;' : 'padding:18px 0 0 0;');
+    const cellClass = st.footerBg ? 'sig-social-pad' : (st.compact ? 'sig-social-compact' : '');
+    const labelRow = st.compact ? '' : `
+            <tr>
+              <td style="padding:0 0 10px 0;font-family:${FONT};font-size:10px;font-weight:bold;color:${labelColor};text-transform:uppercase;letter-spacing:1px;mso-color-alt:${labelColor};">
+                Connect with us
+              </td>
+            </tr>`;
 
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:0;">
       <tr>
         <td class="${cellClass}" bgcolor="${bgColor}" style="background-color:${bgColor};background-image:linear-gradient(${bgColor},${bgColor});${cellPad}${topBorder}mso-color-alt:${bgColor};">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-            <tr>
-              <td style="padding:0 0 10px 0;font-family:${FONT};font-size:10px;font-weight:bold;color:${labelColor};text-transform:uppercase;letter-spacing:1px;mso-color-alt:${labelColor};">
-                Connect with us
-              </td>
-            </tr>
+            ${labelRow}
             <tr>
               <td>
                 <table cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>
@@ -1173,7 +1264,7 @@ function buildDisclaimerBlock() {
 function wrapSignature(innerHtml, width, options) {
     const opts = options || {};
     const disclaimerHtml = opts.includeDisclaimer ? buildDisclaimerBlock() : '';
-    const w = width || 600;
+    const w = width || SIG_LONG_WIDTH;
 
     return `${buildResponsiveStyles()}
 <table id="sig-root" class="sig-wrap" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${BRAND.white}"
@@ -1194,152 +1285,80 @@ function wrapSignature(innerHtml, width, options) {
 }
 
 /* Design 1 — Modern Corporate Executive */
-function templateCorporate(data) {
-    const header = buildHeaderRow(data, {
-        logoOpts: { width: 195 },
-        showTagline: false,
-        nameStyle: HEADER_NAME_STYLE,
-        titleStyle: HEADER_TITLE_STYLE
-    });
+function templateCorporate(data, options) {
+    const inner = buildLongSignatureInner(data, {
+        accentColor: BRAND.teal,
+        topBar: buildTopAccentBar(BRAND.teal, 3),
+        logoWidth: 175,
+        left: { ctaMaxWidth: 200 },
+        right: {
+            nameStyle: HEADER_NAME_STYLE,
+            titleStyle: HEADER_TITLE_STYLE,
+            contactAccent: BRAND.teal
+        }
+    }, options);
 
-    const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
-      <tr>
-        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
-        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-            <tr>
-              <td style="padding:0;line-height:0;font-size:0;">${buildTopAccentBar(BRAND.teal, 3)}</td>
-            </tr>
-            <tr>
-              <td class="sig-pad-top" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:22px 26px 0 24px;">
-                ${header}
-                ${buildNameAccentLine(BRAND.teal)}
-              </td>
-            </tr>
-            <tr>
-              <td class="sig-pad-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 24px 24px;">
-                ${buildDivider()}
-                ${buildContactPanel(buildContactGrid(data), BRAND.teal)}
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-                  <tr>
-                    <td style="padding:18px 0 10px 0;">
-                      ${buildTaglineBadge(COMPANY_TAGLINE)}
-                    </td>
-                  </tr>
-                  <tr><td style="padding:4px 0 0 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border-top:1px solid ${BRAND.border};mso-color-alt:${BRAND.grayBg};">
-                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.navy })}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>`;
-
-    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
+    return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
 }
 
 /* Design 2 — Premium Financial Institution */
-function templateInstitution(data) {
+function templateInstitution(data, options) {
     const instNameStyle = `font-family:Georgia,'Times New Roman',${FONT};font-size:25px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:0.2px;mso-color-alt:${BRAND.navy};`;
-    const header = buildHeaderRow(data, {
-        logoOpts: { width: 190 },
-        showTagline: false,
-        nameStyle: instNameStyle,
-        titleStyle: HEADER_TITLE_STYLE
-    });
-
-    const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+    const extraRows = `
       <tr>
-        <td width="4" bgcolor="${BRAND.navy}" style="width:4px;background-color:${BRAND.navy};font-size:0;line-height:0;">&nbsp;</td>
-        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-            <tr>
-              <td style="padding:0;line-height:0;font-size:0;">${buildTopAccentBar(BRAND.navy, 5)}</td>
-            </tr>
-            <tr>
-              <td class="sig-pad-top" bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};padding:22px 26px 20px 24px;border-bottom:2px solid ${BRAND.teal};mso-color-alt:${BRAND.grayBg};">
-                ${header}
-              </td>
-            </tr>
-            <tr>
-              <td class="sig-pad-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:0 26px 24px 24px;">
-                ${buildInstitutionDivider()}
-                ${buildContactPanel(buildContactGrid(data), BRAND.navy)}
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:14px;">
-                  <tr>
-                    <td style="padding:0 0 12px 0;">
-                      ${buildAddressPanel(COMPANY_ADDRESS)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:0 0 14px 0;font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
-                      ${COMPANY_TAGLINE}
-                    </td>
-                  </tr>
-                  <tr><td style="padding:0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td bgcolor="${BRAND.navy}" style="background-color:${BRAND.navy};border-top:2px solid ${BRAND.teal};mso-color-alt:${BRAND.navy};">
-                ${buildSocialIcons(data, { footerBg: true, labelColor: BRAND.white, footerBgColor: BRAND.navy })}
-              </td>
-            </tr>
-          </table>
+        <td style="padding:14px 0 0 0;">
+          ${buildAddressPanel(COMPANY_ADDRESS)}
         </td>
       </tr>
-    </table>`;
+      <tr>
+        <td style="padding:10px 0 0 0;font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
+          ${COMPANY_TAGLINE}
+        </td>
+      </tr>`;
 
-    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
+    const inner = buildLongSignatureInner(data, {
+        accentColor: BRAND.navy,
+        topBar: buildTopAccentBar(BRAND.navy, 5),
+        logoWidth: 175,
+        left: { ctaMaxWidth: 200 },
+        right: {
+            nameStyle: instNameStyle,
+            titleStyle: HEADER_TITLE_STYLE,
+            contactAccent: BRAND.navy,
+            useInstitutionDivider: true,
+            extraRows
+        }
+    }, options);
+
+    return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
 }
 
 /* Design 3 — Luxury Fintech Card */
 function templateLuxury(data, options) {
-    const opts = options || {};
-    const forOutlook = !!opts.forOutlook;
-    const header = buildLuxuryDarkHeader(data, forOutlook);
-
-    const inner = `
-    <table class="sig-lux-card" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border:1px solid ${BRAND.border};">
+    const inner = buildLongSignatureInner(data, {
+        cardClass: 'sig-lux-card',
+        accentColor: BRAND.teal,
+        logoWidth: 165,
+        left: {
+            bg: BRAND.navy,
+            ctaMaxWidth: 185,
+            iconSize: 28,
+            imgSize: 14
+        },
+        right: {
+            nameStyle: HEADER_NAME_STYLE,
+            titleStyle: HEADER_TITLE_STYLE,
+            contactAccent: BRAND.teal,
+            extraRows: `
       <tr>
-        <td width="4" bgcolor="${BRAND.teal}" style="width:4px;background-color:${BRAND.teal};font-size:0;line-height:0;">&nbsp;</td>
-        <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-            <tr>
-              <td style="padding:0;line-height:0;font-size:0;">${header}</td>
-            </tr>
-            <tr>
-              <td class="sig-pad-body sig-lux-body" bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}padding:20px 24px 24px 24px;">
-                ${buildContactGrid(data)}
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-                  <tr>
-                    <td style="padding:16px 0 8px 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
-                      ${COMPANY_TAGLINE}
-                    </td>
-                  </tr>
-                  <tr><td style="padding:2px 0 10px 0;">${buildCTAHtml(PORTAL_URL)}</td></tr>
-                </table>
-                ${buildSocialIcons(data, {
-                    topBorder: BRAND.border,
-                    labelColor: BRAND.navy,
-                    iconSize: 32,
-                    imgSize: 16
-                })}
-              </td>
-            </tr>
-          </table>
+        <td style="padding:12px 0 0 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
+          ${COMPANY_TAGLINE}
         </td>
-      </tr>
-    </table>`;
+      </tr>`
+        }
+    }, options);
 
-    return wrapSignature(inner, 620, { includeDisclaimer: data.includeDisclaimer });
+    return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
 }
 
 const TEMPLATES = {
