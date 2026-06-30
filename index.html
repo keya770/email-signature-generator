@@ -309,9 +309,9 @@
             color: #42d9e4 !important;
             -webkit-text-fill-color: #42d9e4 !important;
         }
-        /* Design 3 — dark email preview: navy left panel stays dark */
-        .preview-shell.mode-dark .preview-box .sig-left-panel,
-        .preview-shell.mode-dark .preview-box .sig-left-panel td {
+        /* Design 3 — dark email preview: navy brand panel stays dark */
+        .preview-shell.mode-dark .preview-box .sig-brand-panel,
+        .preview-shell.mode-dark .preview-box .sig-brand-panel td {
             background-color: #0B1F3A !important;
             background-image: linear-gradient(#0B1F3A, #0B1F3A) !important;
         }
@@ -981,15 +981,15 @@ function buildContactInline(data, separatorColor) {
 const SIG_LONG_WIDTH = 700;
 const CTA_LABEL = 'START TRADING';
 
-function buildLongLeftColumn(data, logoHtml, config) {
+function buildLongBrandColumn(data, logoHtml, config) {
     const cfg = config || {};
     const bg = cfg.bg;
     const bgStyle = bg ? buildAntiInvertBg(bg) : '';
     const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-      <tr><td align="left" style="padding:0 0 16px 0;">${logoHtml}</td></tr>
-      <tr><td align="left" style="padding:0 0 12px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 200 })}</td></tr>
-      <tr><td align="left" style="padding:0;">${buildSocialIcons(data, {
+    <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;margin-left:auto;">
+      <tr><td align="right" style="padding:0 0 16px 0;">${logoHtml}</td></tr>
+      <tr><td align="right" style="padding:0 0 12px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 200 })}</td></tr>
+      <tr><td align="right" style="padding:0;">${buildSocialIcons(data, {
         compact: true,
         iconSize: cfg.iconSize || 28,
         imgSize: cfg.imgSize || 14
@@ -1000,8 +1000,8 @@ function buildLongLeftColumn(data, logoHtml, config) {
         return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
       <tr>
-        <td class="sig-left-panel sig-dark-header" bgcolor="${bg}" data-ogsb="${bg}"
-          style="${bgStyle}padding:18px 14px;color-scheme:light only;">
+        <td class="sig-brand-panel sig-dark-header" bgcolor="${bg}" data-ogsb="${bg}"
+          style="${bgStyle}padding:18px 14px;color-scheme:light only;text-align:right;">
           ${inner}
         </td>
       </tr>
@@ -1010,7 +1010,7 @@ function buildLongLeftColumn(data, logoHtml, config) {
     return inner;
 }
 
-function buildLongRightColumn(data, config) {
+function buildLongDetailsColumn(data, config) {
     const cfg = config || {};
     const name = escapeHtml(data.name);
     const title = escapeHtml(data.title);
@@ -1040,8 +1040,8 @@ function buildLongSignatureInner(data, config, options) {
     const cfg = config || {};
     const forOutlook = !!(options && options.forOutlook);
     const logoHtml = buildLogoForTemplate(data, { width: cfg.logoWidth || 175, forOutlook });
-    const leftCol = buildLongLeftColumn(data, logoHtml, cfg.left || {});
-    const rightCol = buildLongRightColumn(data, cfg.right || {});
+    const detailsCol = buildLongDetailsColumn(data, cfg.details || {});
+    const brandCol = buildLongBrandColumn(data, logoHtml, cfg.brand || {});
     const accentColor = cfg.accentColor || BRAND.teal;
     const accentW = cfg.accentWidth || 4;
     const dividerColor = cfg.dividerColor || BRAND.border;
@@ -1060,12 +1060,12 @@ function buildLongSignatureInner(data, config, options) {
               <td class="sig-pad-long" bgcolor="${cardBg}" style="${cardBgStyle}padding:22px 26px 24px 24px;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
                   <tr>
-                    <td class="sig-col-left" valign="top" width="210" style="width:210px;min-width:180px;vertical-align:top;padding:0 22px 0 0;">
-                      ${leftCol}
+                    <td class="sig-col-left" valign="top" align="left" style="vertical-align:top;padding:0 24px 0 0;text-align:left;">
+                      ${detailsCol}
                     </td>
                     <td class="sig-col-divider" width="1" valign="top" style="width:1px;border-left:1px solid ${dividerColor};font-size:0;line-height:0;mso-border-left-alt:1px solid ${dividerColor};">&nbsp;</td>
-                    <td class="sig-col-right" valign="top" style="vertical-align:top;padding:0 0 0 24px;">
-                      ${rightCol}
+                    <td class="sig-col-right" valign="top" align="right" width="210" style="width:210px;min-width:180px;vertical-align:top;padding:0;text-align:right;">
+                      ${brandCol}
                     </td>
                   </tr>
                 </table>
@@ -1106,7 +1106,7 @@ function buildResponsiveStyles() {
           .sig-lux-body .sig-contact span { color: #999999 !important; -webkit-text-fill-color: #999999 !important; }
           .sig-lux-body .sig-social-pad table tr:first-child td { color: #E2E8F0 !important; -webkit-text-fill-color: #E2E8F0 !important; }
           .sig-lux-name, .sig-lux-logo { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
-          .sig-left-panel, .sig-left-panel td { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
+          .sig-brand-panel, .sig-brand-panel td { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
         }
       a { word-break: break-word; }
       @media only screen and (max-width: 520px) {
@@ -1126,7 +1126,7 @@ function buildResponsiveStyles() {
           height: 1px !important;
           line-height: 0 !important;
         }
-        .sig-col-right { padding: 0 !important; }
+        .sig-col-right { padding: 16px 0 0 0 !important; text-align: left !important; }
         .sig-pad-top { padding: 16px 14px 0 14px !important; }
         .sig-pad-body { padding: 0 14px 16px 14px !important; }
         .sig-pad-mid { padding: 16px 14px !important; }
@@ -1290,8 +1290,8 @@ function templateCorporate(data, options) {
         accentColor: BRAND.teal,
         topBar: buildTopAccentBar(BRAND.teal, 3),
         logoWidth: 175,
-        left: { ctaMaxWidth: 200 },
-        right: {
+        brand: { ctaMaxWidth: 200 },
+        details: {
             nameStyle: HEADER_NAME_STYLE,
             titleStyle: HEADER_TITLE_STYLE,
             contactAccent: BRAND.teal
@@ -1320,8 +1320,8 @@ function templateInstitution(data, options) {
         accentColor: BRAND.navy,
         topBar: buildTopAccentBar(BRAND.navy, 5),
         logoWidth: 175,
-        left: { ctaMaxWidth: 200 },
-        right: {
+        brand: { ctaMaxWidth: 200 },
+        details: {
             nameStyle: instNameStyle,
             titleStyle: HEADER_TITLE_STYLE,
             contactAccent: BRAND.navy,
@@ -1339,13 +1339,13 @@ function templateLuxury(data, options) {
         cardClass: 'sig-lux-card',
         accentColor: BRAND.teal,
         logoWidth: 165,
-        left: {
+        brand: {
             bg: BRAND.navy,
             ctaMaxWidth: 185,
             iconSize: 28,
             imgSize: 14
         },
-        right: {
+        details: {
             nameStyle: HEADER_NAME_STYLE,
             titleStyle: HEADER_TITLE_STYLE,
             contactAccent: BRAND.teal,
