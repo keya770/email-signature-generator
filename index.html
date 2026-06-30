@@ -3,7 +3,7 @@
   INTERVIEW PREP — EMAIL SIGNATURE GENERATOR (Task 1)
   =============================================================================
   2 MIN PITCH: "Internal tool banaya jahan employee details daal kar professional
-  email signature generate hoti hai — 3 templates, Outlook/Gmail safe HTML, copy
+  email signature generate hoti hai — 2 templates, Outlook/Gmail safe HTML, copy
   for Outlook, download .htm, dark/light preview, validation."
 
   TECH USED & WHY:
@@ -309,7 +309,7 @@
             color: #42d9e4 !important;
             -webkit-text-fill-color: #42d9e4 !important;
         }
-        /* Design 3 — dark email preview: navy brand panel stays dark */
+        /* Dark email preview: navy brand panel stays dark */
         .preview-shell.mode-dark .preview-box .sig-brand-panel,
         .preview-shell.mode-dark .preview-box .sig-brand-panel td {
             background-color: #0B1F3A !important;
@@ -478,8 +478,7 @@
         <label for="template">Signature Template</label>
         <select id="template">
           <option value="corporate">Design 1 — Modern Corporate Executive</option>
-          <option value="institution">Design 2 — Premium Financial Institution</option>
-          <option value="luxury">Design 3 — Luxury Fintech Card</option>
+          <option value="card">Design 4 — Professional Card Layout</option>
         </select>
       </div>
 
@@ -515,7 +514,7 @@
     </div>
 
     <div class="preview-shell mode-light" id="previewShell">
-      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — Design 3 navy left panel stays dark with white logo. Copy for Outlook uses PNG logo.</p>
+      <p class="preview-mode-hint" id="previewModeHint">Dark email preview — signature stays clean and readable in dark compose mode.</p>
       <!-- Generated signature HTML injected here by generateSignature() -->
       <div class="preview-box" id="previewBox">
         <p class="preview-placeholder">Fill in your details and click Generate</p>
@@ -572,8 +571,9 @@ const BRAND = {
 
 const FONT = "Arial,Helvetica,'Segoe UI',sans-serif";
 
-const HEADER_NAME_STYLE = `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:-0.2px;mso-color-alt:${BRAND.navy};`;
-const HEADER_TITLE_STYLE = `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.45;padding-top:6px;mso-color-alt:${BRAND.teal};`;
+const HEADER_NAME_STYLE = `font-family:${FONT};font-size:17px;font-weight:600;color:${BRAND.navy};line-height:1.25;letter-spacing:0;mso-color-alt:${BRAND.navy};`;
+const HEADER_TITLE_STYLE = `font-family:${FONT};font-size:12px;font-weight:normal;color:${BRAND.teal};line-height:1.4;padding-top:2px;mso-color-alt:${BRAND.teal};`;
+const SIG_CONTACT_SIZE = '12px';
 const LUXURY_HEADER_NAME_STYLE = `font-family:${FONT};font-size:24px;font-weight:bold;color:${BRAND.white};line-height:1.2;mso-color-alt:${BRAND.white};`;
 const LUXURY_HEADER_TITLE_STYLE = `font-family:${FONT};font-size:17px;font-weight:normal;color:${BRAND.teal};line-height:1.4;padding-top:6px;mso-color-alt:${BRAND.teal};`;
 
@@ -638,9 +638,7 @@ const SOCIAL_ICONS = {
     }
 };
 
-const DISCLAIMER_TEXT =
-    '<strong style="color:#0B1F3A;mso-color-alt:#0B1F3A;">High-Risk Investment Warning:</strong> ' +
-    '<span style="color:#334155;mso-color-alt:#334155;">Trading Foreign Exchange (Forex) and Contracts for Differences (CFDs) are complex instruments and come with a high risk of losing money rapidly due to leverage. The majority of investor accounts lose money when trading CFDs and Forex. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.</span>';
+const SIG_NOWRAP = 'white-space:nowrap;mso-line-height-rule:exactly;';
 
 let generatedHTML = '';
 let outlookHTML = '';
@@ -697,12 +695,12 @@ function buildLogoForTemplate(data, logoOpts) {
     const opts = logoOpts || {};
     const tpl = data.template;
 
-    if (tpl === 'corporate' || tpl === 'institution') {
+    if (tpl === 'corporate') {
         return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 175, forOutlook: opts.forOutlook });
     }
 
-    if (tpl === 'luxury') {
-        return buildWhiteSvgLogoBlock(data.websiteUrl, { width: opts.width || 175, forOutlook: opts.forOutlook });
+    if (tpl === 'card') {
+        return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 108, forOutlook: opts.forOutlook });
     }
 
     return buildCorporateLogoBlock(data.websiteUrl, opts);
@@ -888,16 +886,8 @@ function buildInstitutionDivider() {
     </table>`;
 }
 
-function buildContactPanel(contactHtml, accentColor) {
-    const color = accentColor || BRAND.teal;
-    return `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-      <tr>
-        <td style="border-left:3px solid ${color};padding:2px 0 2px 16px;mso-border-left-alt:3px solid ${color};">
-          ${contactHtml}
-        </td>
-      </tr>
-    </table>`;
+function buildContactPanel(contactHtml) {
+    return contactHtml;
 }
 
 function buildTaglineBadge(text) {
@@ -915,7 +905,7 @@ function buildAddressPanel(text) {
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
       <tr>
-        <td class="sig-address" bgcolor="${BRAND.grayBg}" style="${buildAntiInvertBg(BRAND.grayBg)}border-left:3px solid ${BRAND.navy};padding:12px 14px;font-family:${FONT};font-size:11px;color:${BRAND.textMuted};line-height:1.55;mso-color-alt:${BRAND.textMuted};">
+        <td class="sig-address" style="padding:4px 0 0 0;font-family:${FONT};font-size:11px;color:${BRAND.textMuted};line-height:1.45;mso-color-alt:${BRAND.textMuted};">
           ${text}
         </td>
       </tr>
@@ -923,10 +913,10 @@ function buildAddressPanel(text) {
 }
 
 function buildContactRow(label, valueHtml) {
-    const labelStyle = `font-family:${FONT};font-size:14px;color:${BRAND.label};line-height:1.7;mso-color-alt:${BRAND.label};`;
+    const labelStyle = `font-family:${FONT};font-size:${SIG_CONTACT_SIZE};color:${BRAND.teal};line-height:1.55;font-weight:600;mso-color-alt:${BRAND.teal};`;
     return `
     <tr>
-      <td valign="top" style="padding:5px 0;font-family:${FONT};font-size:14px;line-height:1.7;">
+      <td class="sig-contact-line" valign="top" style="padding:0 0 4px 0;font-family:${FONT};font-size:${SIG_CONTACT_SIZE};line-height:1.55;${SIG_NOWRAP}">
         <span style="${labelStyle}">${label}:&nbsp;</span>${valueHtml}
       </td>
     </tr>`;
@@ -940,8 +930,8 @@ function buildContactGrid(data) {
     const tel = sanitizePhone(data.phone);
     const waNum = sanitizeWhatsApp(data.whatsapp);
     const waLink = waNum ? `https://wa.me/${waNum}` : '';
-    const linkStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
-    const webStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:14px;font-weight:500;mso-color-alt:${BRAND.link};`;
+    const linkStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:${SIG_CONTACT_SIZE};font-weight:normal;mso-color-alt:${BRAND.link};`;
+    const webStyle = `color:${BRAND.link};text-decoration:none;font-family:${FONT};font-size:${SIG_CONTACT_SIZE};font-weight:normal;mso-color-alt:${BRAND.link};`;
 
     let rows = buildContactRow('Phone', `<a href="tel:${escapeHtml(tel)}" style="${linkStyle}">${phone}</a>`);
     if (data.whatsapp) {
@@ -978,58 +968,191 @@ function buildContactInline(data, separatorColor) {
     return line;
 }
 
-const SIG_LONG_WIDTH = 700;
+const SIG_INNER_WIDTH = 580;
+const SIG_LONG_WIDTH = 600;
+const SIG_CARD_WIDTH = 540;
 const CTA_LABEL = 'START TRADING';
 
-function buildLongBrandColumn(data, logoHtml, config) {
-    const cfg = config || {};
-    const bg = cfg.bg;
-    const bgStyle = bg ? buildAntiInvertBg(bg) : '';
-    const inner = `
-    <table cellpadding="0" cellspacing="0" border="0" align="right" style="border-collapse:collapse;margin-left:auto;">
-      <tr><td align="right" style="padding:0 0 16px 0;">${logoHtml}</td></tr>
-      <tr><td align="right" style="padding:0 0 12px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 200 })}</td></tr>
-      <tr><td align="right" style="padding:0;">${buildSocialIcons(data, {
-        compact: true,
-        iconSize: cfg.iconSize || 28,
-        imgSize: cfg.imgSize || 14
-    })}</td></tr>
-    </table>`;
+const DISCLAIMER_LINE_STYLE = `font-family:${FONT};font-size:9px;color:#334155;line-height:1.55;text-align:justify;mso-color-alt:#334155;padding:0;mso-line-height-rule:exactly;word-break:normal;overflow-wrap:break-word;`;
 
-    if (bg) {
-        return `
+function buildDisclaimerHtml() {
+    return '<strong style="color:#0B1F3A;mso-color-alt:#0B1F3A;">High-Risk Investment Warning:</strong> Trading Foreign Exchange (Forex) and Contracts for Differences (CFDs) are complex instruments and come with a high risk of losing money rapidly due to leverage. The majority of investor accounts lose money when trading CFDs and Forex. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.';
+}
+
+function buildSimpleDivider() {
+    return `
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:0;">
+      <tr>
+        <td style="border-bottom:1px solid #9DE5EC;font-size:0;line-height:0;height:1px;padding:0;mso-line-height-rule:exactly;">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildCardDivider() {
+    return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
       <tr>
-        <td class="sig-brand-panel sig-dark-header" bgcolor="${bg}" data-ogsb="${bg}"
-          style="${bgStyle}padding:18px 14px;color-scheme:light only;text-align:right;">
-          ${inner}
+        <td style="border-bottom:1px solid #D1D5DB;font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
+      </tr>
+    </table>`;
+}
+
+function buildCardContactGrid(data) {
+    const phone = escapeHtml(data.phone);
+    const email = escapeHtml(data.email);
+    const whatsapp = escapeHtml(data.whatsapp);
+    const tel = sanitizePhone(data.phone);
+    const waNum = sanitizeWhatsApp(data.whatsapp);
+    const waLink = waNum ? `https://wa.me/${waNum}` : '';
+    const linkStyle = `color:${BRAND.text};text-decoration:none;font-family:${FONT};font-size:12px;font-weight:normal;mso-color-alt:${BRAND.text};`;
+    const labelStyle = `font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};mso-color-alt:${BRAND.teal};`;
+
+    function row(label, html) {
+        return `<tr>
+      <td class="sig-card-contact" valign="top" style="padding:0 0 6px 0;font-family:${FONT};font-size:12px;line-height:1.5;${SIG_NOWRAP}">
+        <span style="${labelStyle}">${label}:&nbsp;</span>${html}
+      </td>
+    </tr>`;
+    }
+
+    let rows = row('Phone', `<a href="tel:${escapeHtml(tel)}" style="${linkStyle}">${phone}</a>`);
+    if (data.whatsapp) {
+        rows += row('WhatsApp', `<a href="${waLink}" style="${linkStyle}">${whatsapp}</a>`);
+    }
+    rows += row('Email', `<a href="mailto:${email}" style="${linkStyle}">${email}</a>`);
+
+    return `<table class="sig-card-contact-table sig-contact" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${rows}</table>`;
+}
+
+function buildCardLogoColumn(logoHtml, ctaMaxW) {
+    const ctaW = ctaMaxW || 105;
+    const ctaHtml = buildCTAHtml(PORTAL_URL, { maxWidth: ctaW, bgColor: BRAND.teal, compact: true });
+    return `
+    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;width:${ctaW}px;">
+      <tr>
+        <td align="left" style="padding:0;line-height:0;">
+          ${logoHtml}
+        </td>
+      </tr>
+      <tr>
+        <td align="left" style="padding:8px 0 0 0;">
+          ${ctaHtml}
         </td>
       </tr>
     </table>`;
-    }
-    return inner;
+}
+
+function buildCardDisclaimerSection() {
+    return `
+            <tr>
+              <td class="sig-disclaimer sig-card-disclaimer sig-disclaimer-text" align="justify" valign="top" width="100%"
+                style="padding:14px 0 0 0;border-top:1px solid #D1D5DB;${DISCLAIMER_LINE_STYLE}width:100%;">
+                ${buildDisclaimerHtml()}
+              </td>
+            </tr>`;
+}
+
+function buildCardSignatureInner(data, options) {
+    const forOutlook = !!(options && options.forOutlook);
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const websiteLabel = escapeHtml(data.websiteLabel);
+    const logoHtml = buildCorporateLogoBlock(data.websiteUrl, { width: 108, forOutlook });
+    const logoCol = buildCardLogoColumn(logoHtml, 105);
+    const contactCol = buildCardContactGrid(data);
+    const socialHtml = buildSocialIcons(data, {
+        compact: true,
+        iconSize: 28,
+        imgSize: 14,
+        rowAlign: 'left'
+    });
+    const cardBg = BRAND.white;
+    const cardBgStyle = buildAntiInvertBg(cardBg);
+    const nameStyle = `font-family:${FONT};font-size:20px;font-weight:bold;color:${BRAND.navy};line-height:1.2;mso-color-alt:${BRAND.navy};`;
+    const titleMuted = `font-family:${FONT};font-size:12px;font-weight:normal;color:${BRAND.textMuted};mso-color-alt:${BRAND.textMuted};`;
+    const titleLink = `font-family:${FONT};font-size:12px;font-weight:normal;color:${BRAND.navy};text-decoration:none;mso-color-alt:${BRAND.navy};`;
+
+    return `
+    <table class="sig-card" cellpadding="0" cellspacing="0" border="0" width="${SIG_CARD_WIDTH}"
+      style="border-collapse:separate;border:1px solid #E5E7EB;border-radius:10px;width:${SIG_CARD_WIDTH}px;max-width:${SIG_CARD_WIDTH}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td bgcolor="${cardBg}" style="${cardBgStyle}border-radius:10px;padding:16px 18px 14px 18px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td class="sig-card-header" style="padding:0;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr><td class="sig-name-text" style="padding:0 0 4px 0;${nameStyle}">${name}</td></tr>
+                  <tr>
+                    <td class="sig-title-text" style="padding:0 0 12px 0;font-family:${FONT};font-size:12px;line-height:1.45;${SIG_NOWRAP}">
+                      <span style="${titleMuted}">${title}</span>
+                      <span style="color:#D1D5DB;mso-color-alt:#D1D5DB;">&nbsp;|&nbsp;</span>
+                      <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${titleLink}">${websiteLabel}</a>
+                    </td>
+                  </tr>
+                  <tr><td style="padding:0;">${buildCardDivider()}</td></tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="sig-card-body" style="padding:14px 0 0 0;">
+                <table class="sig-card-inner" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td class="sig-card-left" valign="top" align="left" width="105"
+                      style="width:105px;vertical-align:top;padding:0 18px 0 0;">
+                      ${logoCol}
+                    </td>
+                    <td class="sig-card-right" valign="top" align="left"
+                      style="vertical-align:top;padding:0;text-align:left;">
+                      ${contactCol}
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                        <tr>
+                          <td class="sig-card-social" style="padding:10px 0 18px 0;line-height:0;">
+                            ${socialHtml}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            ${data.includeDisclaimer ? buildCardDisclaimerSection() : ''}
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildLongBrandColumn(data, logoHtml, config) {
+    const cfg = config || {};
+    const ctaTop = cfg.ctaTopPad != null ? cfg.ctaTopPad : 16;
+    return `
+    <table class="sig-brand-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;">
+      <tr><td class="sig-brand-logo" align="left" style="padding:0 0 2px 0;line-height:0;">${logoHtml}</td></tr>
+      <tr><td class="sig-brand-cta" align="left" style="padding:${ctaTop}px 0 6px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 155, bgColor: BRAND.teal })}</td></tr>
+      <tr><td class="sig-brand-social" align="left" style="padding:4px 0 0 0;line-height:0;">${buildSocialIcons(data, {
+        compact: true,
+        iconSize: cfg.iconSize || 24,
+        imgSize: cfg.imgSize || 14,
+        rowAlign: 'center',
+        containerWidth: cfg.ctaMaxWidth || 155
+    })}</td></tr>
+    </table>`;
 }
 
 function buildLongDetailsColumn(data, config) {
     const cfg = config || {};
     const name = escapeHtml(data.name);
     const title = escapeHtml(data.title);
-    const accent = cfg.contactAccent || BRAND.teal;
-    const separator = cfg.useInstitutionDivider ? buildInstitutionDivider() : `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin:0;">
-      <tr>
-        <td style="border-bottom:1px solid ${BRAND.border};font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
-      </tr>
-    </table>`;
 
     return `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
-      <tr><td class="sig-name-text" style="padding:0;${cfg.nameStyle}">${name}</td></tr>
-      <tr><td class="sig-title-text" style="padding:0;${cfg.titleStyle}">${title}</td></tr>
-      <tr><td style="padding:12px 0 0 0;">${separator}</td></tr>
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr><td class="sig-name-text" style="padding:0 0 2px 0;${SIG_NOWRAP}${cfg.nameStyle}">${name}</td></tr>
+      <tr><td class="sig-title-text" style="padding:0 0 10px 0;${SIG_NOWRAP}${cfg.titleStyle}">${title}</td></tr>
+      <tr><td style="padding:0 0 2px 0;">${buildSimpleDivider()}</td></tr>
       <tr>
-        <td style="padding:12px 0 0 0;">
-          ${buildContactPanel(buildContactGrid(data), accent)}
+        <td style="padding:8px 0 0 0;">
+          ${buildContactPanel(buildContactGrid(data))}
         </td>
       </tr>
       ${cfg.extraRows || ''}
@@ -1043,28 +1166,30 @@ function buildLongSignatureInner(data, config, options) {
     const detailsCol = buildLongDetailsColumn(data, cfg.details || {});
     const brandCol = buildLongBrandColumn(data, logoHtml, cfg.brand || {});
     const accentColor = cfg.accentColor || BRAND.teal;
-    const accentW = cfg.accentWidth || 4;
-    const dividerColor = cfg.dividerColor || BRAND.border;
+    const accentW = cfg.accentWidth || 3;
     const cardBg = cfg.cardBg || BRAND.white;
     const cardBgStyle = buildAntiInvertBg(cardBg);
 
+    const innerW = cfg.innerWidth || SIG_INNER_WIDTH;
+
     return `
     <table class="sig-long-card ${cfg.cardClass || ''}" cellpadding="0" cellspacing="0" border="0" width="100%"
-      style="border-collapse:collapse;border:1px solid ${BRAND.border};width:100%;">
+      style="border-collapse:collapse;width:100%;max-width:${SIG_LONG_WIDTH}px;">
       <tr>
         <td width="${accentW}" bgcolor="${accentColor}" style="width:${accentW}px;background-color:${accentColor};font-size:0;line-height:0;mso-color-alt:${accentColor};">&nbsp;</td>
         <td bgcolor="${cardBg}" style="${cardBgStyle}">
-          ${cfg.topBar || ''}
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
-              <td class="sig-pad-long" bgcolor="${cardBg}" style="${cardBgStyle}padding:22px 26px 24px 24px;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+              <td class="sig-pad-long" bgcolor="${cardBg}" style="${cardBgStyle}padding:12px 16px 12px 14px;">
+                <table class="sig-long-inner" cellpadding="0" cellspacing="0" border="0" width="1"
+                  style="border-collapse:collapse;width:auto;max-width:100%;">
                   <tr>
-                    <td class="sig-col-left" valign="top" align="left" style="vertical-align:top;padding:0 24px 0 0;text-align:left;">
+                    <td class="sig-col-left" valign="top" align="left" width="1"
+                      style="width:1%;vertical-align:top;padding:0 18px 0 0;text-align:left;${SIG_NOWRAP}">
                       ${detailsCol}
                     </td>
-                    <td class="sig-col-divider" width="1" valign="top" style="width:1px;border-left:1px solid ${dividerColor};font-size:0;line-height:0;mso-border-left-alt:1px solid ${dividerColor};">&nbsp;</td>
-                    <td class="sig-col-right" valign="top" align="right" width="210" style="width:210px;min-width:180px;vertical-align:top;padding:0;text-align:right;">
+                    <td class="sig-col-right" valign="top" align="left"
+                      style="width:auto;vertical-align:top;padding:0;text-align:left;">
                       ${brandCol}
                     </td>
                   </tr>
@@ -1084,9 +1209,30 @@ function buildAntiInvertBg(color) {
 function buildResponsiveStyles() {
     return `<style type="text/css">
       #sig-root, .sig-wrap { width: 100% !important; max-width: ${SIG_LONG_WIDTH}px !important; }
+      .sig-wrap.sig-card-root { width: ${SIG_CARD_WIDTH}px !important; max-width: ${SIG_CARD_WIDTH}px !important; }
+      .sig-long-inner { width: auto !important; max-width: 100% !important; }
+      .sig-col-left { width: 1% !important; white-space: nowrap !important; }
+      .sig-col-right { width: auto !important; text-align: left !important; }
+      .sig-brand-col { width: auto !important; }
+      .sig-brand-col td { text-align: left !important; }
+      .sig-social-icon td { text-align: center !important; vertical-align: middle !important; }
+      .sig-social-icon img { display: block !important; margin: 0 auto !important; }
+      .sig-pad-long { padding: 12px 16px 12px 14px !important; }
+      .sig-contact-line { white-space: nowrap !important; font-size: 12px !important; line-height: 1.55 !important; }
+      .sig-name-text { font-size: 17px !important; font-weight: 600 !important; line-height: 1.25 !important; color: #0B1F3A !important; }
+      .sig-title-text { font-size: 12px !important; font-weight: normal !important; line-height: 1.4 !important; color: #42d9e4 !important; }
+      .sig-name-text, .sig-title-text { white-space: nowrap !important; }
+      .sig-disclaimer-text { line-height: 1.55 !important; text-align: justify !important; text-justify: inter-word !important; font-size: 9px !important; width: 100% !important; color: #334155 !important; word-break: normal !important; overflow-wrap: break-word !important; }
+      .sig-card-disclaimer { text-align: justify !important; text-justify: inter-word !important; font-size: 9px !important; line-height: 1.55 !important; width: 100% !important; padding-top: 14px !important; border-top: 1px solid #D1D5DB !important; word-break: normal !important; }
+      .sig-card-social { padding-bottom: 18px !important; }
+      .sig-card { border: 1px solid #E5E7EB !important; border-radius: 10px !important; width: ${SIG_CARD_WIDTH}px !important; max-width: ${SIG_CARD_WIDTH}px !important; }
+      .sig-card-left { width: 105px !important; }
+      .sig-card-contact { white-space: nowrap !important; font-size: 12px !important; line-height: 1.5 !important; }
+      .sig-card .sig-logo-img { max-width: 108px !important; }
+      .sig-logo-img { max-width: 140px !important; }
+        .sig-logo-white { max-width: 140px; }
       img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-        .sig-logo-img { width: 100%; max-width: 190px; height: auto; display: block; }
-        .sig-logo-white { max-width: 175px; }
+        .sig-logo-img { width: 100%; max-width: 140px; height: auto; display: block; }
         .sig-dark-header { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
         .sig-dark-header td { background-color: #0B1F3A !important; background-image: linear-gradient(#0B1F3A, #0B1F3A) !important; }
         .sig-dark-header .sig-name-text { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; mso-color-alt: #ffffff; }
@@ -1111,22 +1257,30 @@ function buildResponsiveStyles() {
       a { word-break: break-word; }
       @media only screen and (max-width: 520px) {
         .sig-wrap { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
-        .sig-pad-long { padding: 16px 14px !important; }
-        .sig-col-left, .sig-col-right, .sig-col-divider {
+        .sig-wrap.sig-card-root, .sig-card { width: 100% !important; max-width: 100% !important; }
+        .sig-pad-long { padding: 8px 10px !important; }
+        .sig-long-inner { width: 100% !important; }
+        .sig-col-left, .sig-col-right {
           display: block !important;
           width: 100% !important;
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
-        .sig-col-left { padding: 0 0 16px 0 !important; }
-        .sig-col-divider {
-          border-left: none !important;
-          border-top: 1px solid #e0e0e0 !important;
-          padding: 16px 0 !important;
-          height: 1px !important;
-          line-height: 0 !important;
+        .sig-col-left { padding: 0 0 8px 0 !important; white-space: normal !important; }
+        .sig-col-right { padding: 0 !important; text-align: left !important; width: 100% !important; }
+        .sig-card-inner { width: 100% !important; }
+        .sig-card-left, .sig-card-right {
+          display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
         }
-        .sig-col-right { padding: 16px 0 0 0 !important; text-align: left !important; }
+        .sig-card-left { padding: 0 0 14px 0 !important; }
+        .sig-card-logo-col { width: 100% !important; max-width: 200px !important; }
+        .sig-card-contact, .sig-card-contact-table td { white-space: normal !important; }
+        .sig-brand-cta { padding-top: 8px !important; }
+        .sig-brand-col, .sig-brand-col td { text-align: left !important; margin-left: 0 !important; }
+        .sig-name-text, .sig-title-text, .sig-contact-line { white-space: normal !important; }
         .sig-pad-top { padding: 16px 14px 0 14px !important; }
         .sig-pad-body { padding: 0 14px 16px 14px !important; }
         .sig-pad-mid { padding: 16px 14px !important; }
@@ -1144,10 +1298,10 @@ function buildResponsiveStyles() {
         .sig-lux-logo { text-align: left !important; }
         .sig-logo-img { max-width: 160px !important; width: 100% !important; height: auto !important; }
         .sig-logo-white { max-width: 150px !important; }
-        .sig-name-text { font-size: 20px !important; line-height: 1.25 !important; }
-        .sig-title-text { font-size: 15px !important; line-height: 1.4 !important; }
+        .sig-name-text { font-size: 16px !important; line-height: 1.3 !important; }
+        .sig-title-text { font-size: 12px !important; line-height: 1.45 !important; }
         .sig-contact td, .sig-contact a, .sig-contact span {
-          font-size: 13px !important;
+          font-size: 12px !important;
           line-height: 1.65 !important;
           word-break: break-word !important;
         }
@@ -1166,23 +1320,31 @@ function buildCTAHtml(portalUrl, options) {
     const opts = options || {};
     const label = opts.label || CTA_LABEL;
     const maxW = opts.maxWidth || 200;
-    const bg = BRAND.teal;
+    const bg = opts.bgColor || BRAND.teal;
     const bgStyle = buildAntiInvertBg(bg);
+    const compact = !!opts.compact;
+    const pad = compact ? '4px 8px' : '8px 14px';
+    const fontSize = compact ? '9px' : '11px';
+    const lineHeight = compact ? '11px' : '14px';
+    const msoH = compact ? '22px' : '32px';
+    const letterSpacing = compact ? '0.15px' : '0.3px';
+    const fontWeight = compact ? '600' : '600';
+    const nowrap = compact ? 'white-space:nowrap;' : '';
     return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" class="sig-cta-wrap" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:${maxW}px;">
       <tr>
         <td align="left" class="sig-cta-wrap" style="padding:0;width:100%;">
           <!--[if mso]>
-          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:40px;v-text-anchor:middle;width:${maxW}px;" arcsize="0%" stroke="f" fillcolor="${bg}">
+          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:office" href="${portalUrl}" style="height:${msoH};v-text-anchor:middle;width:${maxW}px;" arcsize="10%" stroke="f" fillcolor="${bg}">
             <w:anchorlock/>
-            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;">${label}</center>
+            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:${fontSize};font-weight:${fontWeight};letter-spacing:${letterSpacing};">${label}</center>
           </v:roundrect>
           <![endif]-->
           <!--[if !mso]><!-->
           <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;width:100%;max-width:${maxW}px;">
             <tr>
-              <td align="center" valign="middle" bgcolor="${bg}" class="sig-cta-btn" style="${bgStyle}border:1px solid ${bg};width:100%;">
+              <td align="center" valign="middle" bgcolor="${bg}" class="sig-cta-btn" style="${bgStyle}border:0;width:100%;border-radius:3px;">
                 <a href="${portalUrl}" target="_blank" class="sig-cta-link"
-                  style="display:inline-block;padding:12px 18px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#ffffff !important;text-decoration:none;letter-spacing:1px;line-height:14px;mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;">
+                  style="display:inline-block;padding:${pad};font-family:Arial,Helvetica,sans-serif;font-size:${fontSize};font-weight:${fontWeight};color:#ffffff !important;text-decoration:none;letter-spacing:${letterSpacing};line-height:${lineHeight};mso-line-height-rule:exactly;-webkit-text-fill-color:#ffffff !important;${nowrap}">
                   <span style="color:#ffffff !important;mso-style-textfill-fill-color:#ffffff;mso-style-textfill-type:solid;">${label}</span>
                 </a>
               </td>
@@ -1199,22 +1361,32 @@ function buildSocialIcons(data, style) {
     if (!platforms.length) return '';
     const st = style || {};
 
-    const cells = platforms.map((key) => {
+    const cells = platforms.map((key, idx) => {
         const s = SOCIAL_ICONS[key];
         if (!s) return '';
         const href = key === 'linkedin' && data.linkedinUrl ? data.linkedinUrl : s.url;
         const size = st.iconSize || 32;
         const imgSize = st.imgSize || 16;
+        const gap = idx < platforms.length - 1 ? 5 : 0;
         return `
-        <td style="padding:0 6px 0 0;">
-          <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <td class="sig-social-cell" style="padding:0 ${gap}px 0 0;line-height:0;font-size:0;">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
             <tr>
-              <td align="center" valign="middle" width="${size}" height="${size}" bgcolor="${s.bg}"
-                style="background-color:${s.bg};width:${size}px;height:${size}px;border:1px solid ${BRAND.white};">
-                <a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;display:block;line-height:0;border:0;">
-                  <img src="${s.img}" alt="${s.alt}" width="${imgSize}" height="${imgSize}" border="0"
-                    style="display:block;border:0;outline:none;width:${imgSize}px;height:${imgSize}px;-ms-interpolation-mode:bicubic;" />
-                </a>
+              <td class="sig-social-icon" align="center" valign="middle" width="${size}" height="${size}" bgcolor="${s.bg}"
+                style="background-color:${s.bg};width:${size}px;height:${size}px;mso-line-height-rule:exactly;line-height:${size}px;text-align:center;vertical-align:middle;border:0;padding:0;font-size:0;">
+                <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="${size}" height="${size}"
+                  style="border-collapse:collapse;width:${size}px;height:${size}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+                  <tr>
+                    <td align="center" valign="middle" width="${size}" height="${size}"
+                      style="width:${size}px;height:${size}px;text-align:center;vertical-align:middle;line-height:0;font-size:0;padding:0;">
+                      <a href="${escapeHtml(href)}" target="_blank"
+                        style="text-decoration:none;border:0;display:inline-block;line-height:0;mso-line-height-rule:exactly;">
+                        <img src="${s.img}" alt="${s.alt}" width="${imgSize}" height="${imgSize}" border="0"
+                          style="display:block;border:0;outline:none;width:${imgSize}px;height:${imgSize}px;margin:0 auto;vertical-align:middle;-ms-interpolation-mode:bicubic;" />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>
@@ -1233,6 +1405,26 @@ function buildSocialIcons(data, style) {
               </td>
             </tr>`;
 
+    const iconRow = `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;"><tr>${cells}</tr></table>`;
+
+    if (st.compact) {
+        const rowAlign = st.rowAlign || 'left';
+        const containerW = st.containerWidth || 0;
+        const containerWrap = containerW
+            ? `<table cellpadding="0" cellspacing="0" border="0" role="presentation" width="${containerW}"
+                style="border-collapse:collapse;width:${containerW}px;max-width:100%;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+              <tr>
+                <td align="${rowAlign}" style="padding:0;line-height:0;text-align:${rowAlign};font-size:0;">
+                  ${iconRow}
+                </td>
+              </tr>
+            </table>`
+            : `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="${rowAlign}" style="border-collapse:collapse;">
+              <tr><td align="${rowAlign}" style="padding:0;line-height:0;text-align:${rowAlign};font-size:0;">${iconRow}</td></tr>
+            </table>`;
+        return containerWrap;
+    }
+
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:0;">
       <tr>
@@ -1241,7 +1433,7 @@ function buildSocialIcons(data, style) {
             ${labelRow}
             <tr>
               <td>
-                <table cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table>
+                ${iconRow}
               </td>
             </tr>
           </table>
@@ -1252,10 +1444,17 @@ function buildSocialIcons(data, style) {
 
 function buildDisclaimerBlock() {
     return `
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:18px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:8px;">
       <tr>
-        <td class="sig-disclaimer" bgcolor="${BRAND.grayBg}" style="background-color:${BRAND.grayBg};border:1px solid ${BRAND.border};padding:14px 16px;font-family:${FONT};font-size:10px;color:${BRAND.text};line-height:1.6;mso-color-alt:${BRAND.text};">
-          ${DISCLAIMER_TEXT}
+        <td style="padding:0 14px 0 12px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td class="sig-disclaimer sig-disclaimer-text" align="justify" valign="top" width="100%"
+                style="padding:14px 0 0 0;border-top:1px solid #D1D5DB;${DISCLAIMER_LINE_STYLE}width:100%;">
+                ${buildDisclaimerHtml()}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>`;
@@ -1266,9 +1465,13 @@ function wrapSignature(innerHtml, width, options) {
     const disclaimerHtml = opts.includeDisclaimer ? buildDisclaimerBlock() : '';
     const w = width || SIG_LONG_WIDTH;
 
+    const widthStyle = w === SIG_CARD_WIDTH
+        ? `width:${w}px;max-width:${w}px;`
+        : 'width:100%;max-width:' + w + 'px;';
+
     return `${buildResponsiveStyles()}
-<table id="sig-root" class="sig-wrap" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${BRAND.white}"
-  style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.text};width:100%;max-width:${w}px;border-collapse:collapse;${buildAntiInvertBg(BRAND.white)}mso-table-lspace:0pt;mso-table-rspace:0pt;">
+<table id="sig-root" class="sig-wrap ${opts.rootClass || ''}" cellpadding="0" cellspacing="0" border="0" bgcolor="${BRAND.white}"
+  style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.text};${widthStyle}border-collapse:collapse;${buildAntiInvertBg(BRAND.white)}mso-table-lspace:0pt;mso-table-rspace:0pt;">
   <tr>
     <td bgcolor="${BRAND.white}" style="${buildAntiInvertBg(BRAND.white)}${opts.outerStyle || ''}">
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
@@ -1288,83 +1491,27 @@ function wrapSignature(innerHtml, width, options) {
 function templateCorporate(data, options) {
     const inner = buildLongSignatureInner(data, {
         accentColor: BRAND.teal,
-        topBar: buildTopAccentBar(BRAND.teal, 3),
-        logoWidth: 175,
-        brand: { ctaMaxWidth: 200 },
+        accentWidth: 3,
+        logoWidth: 140,
+        brand: { ctaMaxWidth: 155, ctaTopPad: 16, iconSize: 22, imgSize: 13 },
         details: {
             nameStyle: HEADER_NAME_STYLE,
-            titleStyle: HEADER_TITLE_STYLE,
-            contactAccent: BRAND.teal
+            titleStyle: HEADER_TITLE_STYLE
         }
     }, options);
 
     return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
 }
 
-/* Design 2 — Premium Financial Institution */
-function templateInstitution(data, options) {
-    const instNameStyle = `font-family:Georgia,'Times New Roman',${FONT};font-size:25px;font-weight:bold;color:${BRAND.navy};line-height:1.15;letter-spacing:0.2px;mso-color-alt:${BRAND.navy};`;
-    const extraRows = `
-      <tr>
-        <td style="padding:14px 0 0 0;">
-          ${buildAddressPanel(COMPANY_ADDRESS)}
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:10px 0 0 0;font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};line-height:1.45;mso-color-alt:${BRAND.teal};">
-          ${COMPANY_TAGLINE}
-        </td>
-      </tr>`;
-
-    const inner = buildLongSignatureInner(data, {
-        accentColor: BRAND.navy,
-        topBar: buildTopAccentBar(BRAND.navy, 5),
-        logoWidth: 175,
-        brand: { ctaMaxWidth: 200 },
-        details: {
-            nameStyle: instNameStyle,
-            titleStyle: HEADER_TITLE_STYLE,
-            contactAccent: BRAND.navy,
-            useInstitutionDivider: true,
-            extraRows
-        }
-    }, options);
-
-    return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
-}
-
-/* Design 3 — Luxury Fintech Card */
-function templateLuxury(data, options) {
-    const inner = buildLongSignatureInner(data, {
-        cardClass: 'sig-lux-card',
-        accentColor: BRAND.teal,
-        logoWidth: 165,
-        brand: {
-            bg: BRAND.navy,
-            ctaMaxWidth: 185,
-            iconSize: 28,
-            imgSize: 14
-        },
-        details: {
-            nameStyle: HEADER_NAME_STYLE,
-            titleStyle: HEADER_TITLE_STYLE,
-            contactAccent: BRAND.teal,
-            extraRows: `
-      <tr>
-        <td style="padding:12px 0 0 0;font-family:${FONT};font-size:12px;color:${BRAND.textMuted};line-height:1.5;mso-color-alt:${BRAND.textMuted};">
-          ${COMPANY_TAGLINE}
-        </td>
-      </tr>`
-        }
-    }, options);
-
-    return wrapSignature(inner, SIG_LONG_WIDTH, { includeDisclaimer: data.includeDisclaimer });
+/* Design 4 — Professional Card Layout (logo left, details right) */
+function templateCard(data, options) {
+    const inner = buildCardSignatureInner(data, options);
+    return wrapSignature(inner, SIG_CARD_WIDTH, { includeDisclaimer: false, rootClass: 'sig-card-root' });
 }
 
 const TEMPLATES = {
     corporate: templateCorporate,
-    institution: templateInstitution,
-    luxury: templateLuxury
+    card: templateCard
 };
 
 /*
