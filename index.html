@@ -588,6 +588,7 @@ const LOGO_WHITE_PNG_CDN = 'https://www.tattvammarkets.com/img/Tattvam_HLogo_Whi
 const LOGO_CORPORATE_URL = 'https://client.tattvammarkets.com/uploads/public/assets/2025/10/02/aa94fb003a1a4782055753bbe5e00452.png';
 const LOGO_VERTICAL_NAME = 'Tattvam_VLogo_Color.png';
 const LOGO_VERTICAL_CDN = 'https://www.tattvammarkets.com/img/Tattvam_VLogo_Color.png';
+const LOGO_VERTICAL_ASPECT = 558 / 1024;
 
 function getVerticalLogoUrl() {
     try {
@@ -598,6 +599,10 @@ function getVerticalLogoUrl() {
         /* use CDN fallback */
     }
     return LOGO_VERTICAL_CDN;
+}
+
+function getOutlookVerticalLogoUrl() {
+    return getVerticalLogoUrl();
 }
 
 function getOutlookWhiteLogoUrl() {
@@ -791,11 +796,27 @@ function buildLuxuryDarkHeader(data, forOutlook) {
 function buildCorporateLogoBlock(websiteUrl, options) {
     const opts = options || {};
     const w = opts.width || 175;
+    const h = Math.round(w * 0.26);
     const url = websiteUrl || WEBSITE_OPTIONS.com.url;
-    const imgW = opts.forOutlook ? w * 2 : w;
-    const imgH = Math.round(imgW * 0.26);
+    const src = LOGO_CORPORATE_URL;
+
+    if (opts.forOutlook) {
+        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td align="left" valign="top" style="padding:0;line-height:0;font-size:0;">
+          <a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;">
+            <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0"
+              style="display:block;border:0;outline:none;width:${w}px;height:${h}px;mso-width-alt:${w};mso-height-alt:${h};-ms-interpolation-mode:bicubic;" />
+          </a>
+        </td>
+      </tr>
+    </table>`;
+    }
+
+    const imgW = w * 2;
+    const imgH = h * 2;
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
-      <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${imgW}" height="${imgH}"
+      <img src="${src}" alt="Tattvam Markets" width="${imgW}" height="${imgH}"
         border="0" class="sig-logo-img"
         style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
     </a>`;
@@ -804,12 +825,26 @@ function buildCorporateLogoBlock(websiteUrl, options) {
 function buildVerticalLogoBlock(websiteUrl, options) {
     const opts = options || {};
     const w = opts.width || 96;
+    const h = Math.round(w * LOGO_VERTICAL_ASPECT);
     const url = websiteUrl || WEBSITE_OPTIONS.com.url;
-    const src = getVerticalLogoUrl();
-    const imgW = opts.forOutlook ? w * 2 : w;
+    const src = opts.forOutlook ? getOutlookVerticalLogoUrl() : getVerticalLogoUrl();
+
+    if (opts.forOutlook) {
+        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td align="left" valign="top" width="${w}" style="width:${w}px;padding:0;line-height:0;font-size:0;">
+          <a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;">
+            <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0"
+              style="display:block;border:0;outline:none;width:${w}px;height:${h}px;mso-width-alt:${w};mso-height-alt:${h};-ms-interpolation-mode:bicubic;" />
+          </a>
+        </td>
+      </tr>
+    </table>`;
+    }
+
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
-      <img src="${src}" alt="Tattvam Markets" width="${imgW}" border="0" class="sig-logo-img sig-logo-vertical"
-        style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+      <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0" class="sig-logo-img sig-logo-vertical"
+        style="display:block;border:0;outline:none;width:${w}px;height:${h}px;max-width:${w}px;mso-width-percent:0;-ms-interpolation-mode:bicubic;" />
     </a>`;
 }
 
@@ -1256,6 +1291,7 @@ function buildResponsiveStyles() {
       .sig-card-contact { white-space: nowrap !important; font-size: 12px !important; line-height: 1.5 !important; }
       .sig-card .sig-logo-img { max-width: 96px !important; }
       .sig-card .sig-logo-vertical { max-width: 96px !important; width: 96px !important; height: auto !important; }
+      .sig-logo-vertical { width: 96px !important; height: 52px !important; max-width: 96px !important; }
       .sig-logo-img { max-width: 140px !important; }
         .sig-logo-white { max-width: 140px; }
       img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
@@ -1718,6 +1754,33 @@ function setPreviewMode(mode) {
  * 5) previewBox.innerHTML = show preview
  * 6) show copy buttons + help box
  */
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function embedOutlookImages(html) {
+    if (!html) return html;
+    const urls = [getVerticalLogoUrl(), LOGO_VERTICAL_CDN, LOGO_CORPORATE_URL];
+    let output = html;
+    for (const imgUrl of urls) {
+        if (!imgUrl || !output.includes(imgUrl)) continue;
+        try {
+            const res = await fetch(imgUrl, { cache: 'no-store' });
+            if (!res.ok) continue;
+            const dataUrl = await blobToBase64(await res.blob());
+            output = output.split(imgUrl).join(dataUrl);
+        } catch (_) {
+            /* keep remote URL if embed fails */
+        }
+    }
+    return output;
+}
+
 function generateSignature() {
     if (!validateForm()) {
         showFeedback('Please fix the highlighted fields before generating.', 'error');
@@ -1726,12 +1789,20 @@ function generateSignature() {
 
     const data = getFormData();
     generatedHTML = buildSignature(data);
-    outlookHTML = buildOutlookDocument(buildSignature(data, { forOutlook: true }));
+    const outlookBody = buildSignature(data, { forOutlook: true });
 
     document.getElementById('previewBox').innerHTML = generatedHTML;
     document.getElementById('actionButtons').hidden = false;
     document.getElementById('copyHelp').classList.add('visible');
-    showFeedback('Signature generated successfully. Use Copy for Outlook to paste.', 'success');
+    showFeedback('Preparing Outlook signature…', 'success');
+
+    embedOutlookImages(outlookBody).then((embeddedBody) => {
+        outlookHTML = buildOutlookDocument(embeddedBody);
+        showFeedback('Signature generated successfully. Use Copy for Outlook to paste.', 'success');
+    }).catch(() => {
+        outlookHTML = buildOutlookDocument(outlookBody);
+        showFeedback('Signature generated. If logo is missing in Outlook, use Download .htm.', 'success');
+    });
 }
 
 /* Download tattvam-signature.htm (full outlookHTML document) */
