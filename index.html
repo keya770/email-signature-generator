@@ -493,6 +493,7 @@
       <div class="checkbox-group" id="socialToggles">
         <label><input type="checkbox" name="social" value="linkedin" checked> LinkedIn</label>
         <label><input type="checkbox" name="social" value="youtube" checked> YouTube</label>
+        <label><input type="checkbox" name="social" value="x" checked> X (Twitter)</label>
         <label><input type="checkbox" name="social" value="telegram" checked> Telegram</label>
         <label><input type="checkbox" name="social" value="instagram" checked> Instagram</label>
         <label><input type="checkbox" name="social" value="facebook" checked> Facebook</label>
@@ -585,6 +586,19 @@ const LOGO_FULL_URL = 'https://www.tattvammarkets.com/img/Tattvam_HLogo_Color_SV
 const LOGO_WHITE_PNG_NAME = 'Tattvam_HLogo_White.png';
 const LOGO_WHITE_PNG_CDN = 'https://www.tattvammarkets.com/img/Tattvam_HLogo_White.png';
 const LOGO_CORPORATE_URL = 'https://client.tattvammarkets.com/uploads/public/assets/2025/10/02/aa94fb003a1a4782055753bbe5e00452.png';
+const LOGO_VERTICAL_NAME = 'Tattvam_VLogo_Color.png';
+const LOGO_VERTICAL_CDN = 'https://www.tattvammarkets.com/img/Tattvam_VLogo_Color.png';
+
+function getVerticalLogoUrl() {
+    try {
+        if (typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
+            return new URL(LOGO_VERTICAL_NAME, window.location.href).href;
+        }
+    } catch (_) {
+        /* use CDN fallback */
+    }
+    return LOGO_VERTICAL_CDN;
+}
 
 function getOutlookWhiteLogoUrl() {
     try {
@@ -614,9 +628,17 @@ const SOCIAL_ICONS = {
     },
     youtube: {
         url: 'https://www.youtube.com/@Tattvammarkets',
-        img: 'https://cdn-icons-png.flaticon.com/32/1384/1384060.png',
+        img: 'https://img.icons8.com/ios-filled/100/ffffff/youtube-play.png',
         bg: '#FF0000',
-        alt: 'YouTube'
+        alt: 'YouTube',
+        imgSize: 16
+    },
+    x: {
+        url: 'https://x.com/tattvammarkets',
+        img: 'https://img.icons8.com/ios-filled/100/ffffff/twitterx.png',
+        bg: '#000000',
+        alt: 'X',
+        imgSize: 14
     },
     telegram: {
         url: 'https://t.me/TattvamMarkets',
@@ -700,7 +722,7 @@ function buildLogoForTemplate(data, logoOpts) {
     }
 
     if (tpl === 'card') {
-        return buildCorporateLogoBlock(data.websiteUrl, { width: opts.width || 108, forOutlook: opts.forOutlook });
+        return buildVerticalLogoBlock(data.websiteUrl, { width: opts.width || 96, forOutlook: opts.forOutlook });
     }
 
     return buildCorporateLogoBlock(data.websiteUrl, opts);
@@ -775,6 +797,18 @@ function buildCorporateLogoBlock(websiteUrl, options) {
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
       <img src="${LOGO_CORPORATE_URL}" alt="Tattvam Markets" width="${imgW}" height="${imgH}"
         border="0" class="sig-logo-img"
+        style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
+    </a>`;
+}
+
+function buildVerticalLogoBlock(websiteUrl, options) {
+    const opts = options || {};
+    const w = opts.width || 96;
+    const url = websiteUrl || WEBSITE_OPTIONS.com.url;
+    const src = getVerticalLogoUrl();
+    const imgW = opts.forOutlook ? w * 2 : w;
+    return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
+      <img src="${src}" alt="Tattvam Markets" width="${imgW}" border="0" class="sig-logo-img sig-logo-vertical"
         style="display:block;width:100%;max-width:${w}px;height:auto;border:0;outline:none;-ms-interpolation-mode:bicubic;" />
     </a>`;
 }
@@ -1024,19 +1058,13 @@ function buildCardContactGrid(data) {
     return `<table class="sig-card-contact-table sig-contact" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${rows}</table>`;
 }
 
-function buildCardLogoColumn(logoHtml, ctaMaxW) {
-    const ctaW = ctaMaxW || 105;
-    const ctaHtml = buildCTAHtml(PORTAL_URL, { maxWidth: ctaW, bgColor: BRAND.teal, compact: true });
+function buildCardLogoColumn(logoHtml, colWidth) {
+    const w = colWidth || 96;
     return `
-    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;width:${ctaW}px;">
+    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;width:${w}px;">
       <tr>
         <td align="left" style="padding:0;line-height:0;">
           ${logoHtml}
-        </td>
-      </tr>
-      <tr>
-        <td align="left" style="padding:8px 0 0 0;">
-          ${ctaHtml}
         </td>
       </tr>
     </table>`;
@@ -1057,8 +1085,8 @@ function buildCardSignatureInner(data, options) {
     const name = escapeHtml(data.name);
     const title = escapeHtml(data.title);
     const websiteLabel = escapeHtml(data.websiteLabel);
-    const logoHtml = buildCorporateLogoBlock(data.websiteUrl, { width: 108, forOutlook });
-    const logoCol = buildCardLogoColumn(logoHtml, 105);
+    const logoHtml = buildVerticalLogoBlock(data.websiteUrl, { width: 96, forOutlook });
+    const logoCol = buildCardLogoColumn(logoHtml, 96);
     const contactCol = buildCardContactGrid(data);
     const socialHtml = buildSocialIcons(data, {
         compact: true,
@@ -1097,8 +1125,8 @@ function buildCardSignatureInner(data, options) {
               <td class="sig-card-body" style="padding:14px 0 0 0;">
                 <table class="sig-card-inner" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                   <tr>
-                    <td class="sig-card-left" valign="top" align="left" width="105"
-                      style="width:105px;vertical-align:top;padding:0 18px 0 0;">
+                    <td class="sig-card-left" valign="top" align="left" width="96"
+                      style="width:96px;vertical-align:top;padding:0 18px 0 0;">
                       ${logoCol}
                     </td>
                     <td class="sig-card-right" valign="top" align="left"
@@ -1125,17 +1153,15 @@ function buildCardSignatureInner(data, options) {
 
 function buildLongBrandColumn(data, logoHtml, config) {
     const cfg = config || {};
-    const ctaTop = cfg.ctaTopPad != null ? cfg.ctaTopPad : 16;
     return `
     <table class="sig-brand-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;">
-      <tr><td class="sig-brand-logo" align="left" style="padding:0 0 2px 0;line-height:0;">${logoHtml}</td></tr>
-      <tr><td class="sig-brand-cta" align="left" style="padding:${ctaTop}px 0 6px 0;">${buildCTAHtml(PORTAL_URL, { maxWidth: cfg.ctaMaxWidth || 155, bgColor: BRAND.teal })}</td></tr>
-      <tr><td class="sig-brand-social" align="left" style="padding:4px 0 0 0;line-height:0;">${buildSocialIcons(data, {
+      <tr><td class="sig-brand-logo" align="left" style="padding:0;line-height:0;">${logoHtml}</td></tr>
+      <tr><td class="sig-brand-social" align="left" style="padding:8px 0 0 0;line-height:0;">${buildSocialIcons(data, {
         compact: true,
         iconSize: cfg.iconSize || 24,
         imgSize: cfg.imgSize || 14,
         rowAlign: 'center',
-        containerWidth: cfg.ctaMaxWidth || 155
+        containerWidth: cfg.socialWidth || 155
     })}</td></tr>
     </table>`;
 }
@@ -1226,9 +1252,10 @@ function buildResponsiveStyles() {
       .sig-card-disclaimer { text-align: justify !important; text-justify: inter-word !important; font-size: 9px !important; line-height: 1.55 !important; width: 100% !important; padding-top: 14px !important; border-top: 1px solid #D1D5DB !important; word-break: normal !important; }
       .sig-card-social { padding-bottom: 18px !important; }
       .sig-card { border: 1px solid #E5E7EB !important; border-radius: 10px !important; width: ${SIG_CARD_WIDTH}px !important; max-width: ${SIG_CARD_WIDTH}px !important; }
-      .sig-card-left { width: 105px !important; }
+      .sig-card-left { width: 96px !important; }
       .sig-card-contact { white-space: nowrap !important; font-size: 12px !important; line-height: 1.5 !important; }
-      .sig-card .sig-logo-img { max-width: 108px !important; }
+      .sig-card .sig-logo-img { max-width: 96px !important; }
+      .sig-card .sig-logo-vertical { max-width: 96px !important; width: 96px !important; height: auto !important; }
       .sig-logo-img { max-width: 140px !important; }
         .sig-logo-white { max-width: 140px; }
       img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
@@ -1366,7 +1393,7 @@ function buildSocialIcons(data, style) {
         if (!s) return '';
         const href = key === 'linkedin' && data.linkedinUrl ? data.linkedinUrl : s.url;
         const size = st.iconSize || 32;
-        const imgSize = st.imgSize || 16;
+        const imgSize = s.imgSize || st.imgSize || 16;
         const gap = idx < platforms.length - 1 ? 5 : 0;
         return `
         <td class="sig-social-cell" style="padding:0 ${gap}px 0 0;line-height:0;font-size:0;">
@@ -1493,7 +1520,7 @@ function templateCorporate(data, options) {
         accentColor: BRAND.teal,
         accentWidth: 3,
         logoWidth: 140,
-        brand: { ctaMaxWidth: 155, ctaTopPad: 16, iconSize: 22, imgSize: 13 },
+        brand: { socialWidth: 155, iconSize: 22, imgSize: 13 },
         details: {
             nameStyle: HEADER_NAME_STYLE,
             titleStyle: HEADER_TITLE_STYLE
