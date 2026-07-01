@@ -147,6 +147,13 @@
             margin-top: 5px;
         }
         .field-error.visible { display: block; } /* Shown by validateField() when invalid */
+        .field-hint {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: #8a8fa0;
+            line-height: 1.4;
+        }
 
         .form-row {
             display: grid;
@@ -470,17 +477,12 @@
           <option value="ae">www.tattvammarkets.ae</option>
           <option value="org">www.tattvammarkets.org</option>
         </select>
+        <p class="field-hint" id="websiteDesignHint">.com: logo left. .ae / .org: logo top-right, website with phone &amp; email.</p>
       </div>
 
-      <p class="section-label">Template &amp; Options</p>
+      <p class="section-label">Options</p>
 
-      <div class="form-group">
-        <label for="template">Signature Template</label>
-        <select id="template">
-          <option value="corporate">Design 1 — Modern Corporate Executive</option>
-          <option value="card">Design 4 — Professional Card Layout</option>
-        </select>
-      </div>
+      <input type="hidden" id="template" value="card" aria-hidden="true">
 
       <div class="form-group">
         <label>
@@ -616,10 +618,51 @@ function getOutlookWhiteLogoUrl() {
     return LOGO_WHITE_PNG_CDN;
 }
 
+const CARD_THEME_BASE = {
+    cardBg: '#FFFFFF',
+    cardBorder: '#E5E7EB',
+    divider: '#D1D5DB',
+    disclaimerBorder: '#D1D5DB',
+    name: '#0B1F3A',
+    titleMuted: '#888888',
+    titleLink: '#0B1F3A',
+    titleSep: '#D1D5DB',
+    label: '#42d9e4',
+    text: '#334155'
+};
+
 const WEBSITE_OPTIONS = {
-    com: { url: 'https://www.tattvammarkets.com/', label: 'www.tattvammarkets.com' },
-    ae: { url: 'https://www.tattvammarkets.ae/', label: 'www.tattvammarkets.ae' },
-    org: { url: 'https://www.tattvammarkets.org/', label: 'www.tattvammarkets.org' }
+    com: {
+        url: 'https://www.tattvammarkets.com/',
+        label: 'www.tattvammarkets.com',
+        designName: 'Standard',
+        theme: { id: 'com' }
+    },
+    ae: {
+        url: 'https://www.tattvammarkets.ae/',
+        label: 'www.tattvammarkets.ae',
+        designName: 'UAE',
+        theme: {
+            id: 'ae',
+            layout: 'alt',
+            cardBorder: '#9DE5EC',
+            divider: '#9DE5EC',
+            disclaimerBorder: '#9DE5EC'
+        }
+    },
+    org: {
+        url: 'https://www.tattvammarkets.org/',
+        label: 'www.tattvammarkets.org',
+        designName: 'Org',
+        theme: {
+            id: 'org',
+            layout: 'alt',
+            contactsInline: true,
+            cardBorder: '#0B1F3A',
+            divider: '#0B1F3A',
+            disclaimerBorder: '#CBD5E1'
+        }
+    }
 };
 
 const PORTAL_URL = 'https://client.tattvammarkets.com/register/';
@@ -689,6 +732,11 @@ function sanitizeWhatsApp(wa) {
 
 function getWebsiteConfig(key) {
     return WEBSITE_OPTIONS[key] || WEBSITE_OPTIONS.com;
+}
+
+function getWebsiteTheme(key) {
+    const cfg = getWebsiteConfig(key);
+    return Object.assign({}, CARD_THEME_BASE, cfg.theme || {}, { id: (cfg.theme && cfg.theme.id) || key || 'com' });
 }
 
 function getPreviewEmailMode() {
@@ -1057,24 +1105,32 @@ function buildSimpleDivider() {
     </table>`;
 }
 
-function buildCardDivider() {
+function buildCardDivider(theme) {
+    const line = (theme && theme.divider) || '#D1D5DB';
     return `
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
       <tr>
-        <td style="border-bottom:1px solid #D1D5DB;font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
+        <td style="border-bottom:1px solid ${line};font-size:0;line-height:0;height:1px;padding:0;">&nbsp;</td>
       </tr>
     </table>`;
 }
 
-function buildCardContactGrid(data) {
+function buildCardLightDivider() {
+    return buildCardDivider({ divider: '#E5E7EB' });
+}
+
+function buildCardContactGrid(data, theme, options) {
+    const opts = options || {};
+    const t = theme || getWebsiteTheme(data.websiteKey);
     const phone = escapeHtml(data.phone);
     const email = escapeHtml(data.email);
     const whatsapp = escapeHtml(data.whatsapp);
+    const websiteLabel = escapeHtml(data.websiteLabel);
     const tel = sanitizePhone(data.phone);
     const waNum = sanitizeWhatsApp(data.whatsapp);
     const waLink = waNum ? `https://wa.me/${waNum}` : '';
-    const linkStyle = `color:${BRAND.text};text-decoration:none;font-family:${FONT};font-size:12px;font-weight:normal;mso-color-alt:${BRAND.text};`;
-    const labelStyle = `font-family:${FONT};font-size:12px;font-weight:600;color:${BRAND.teal};mso-color-alt:${BRAND.teal};`;
+    const linkStyle = `color:${t.text};text-decoration:none;font-family:${FONT};font-size:12px;font-weight:normal;mso-color-alt:${t.text};`;
+    const labelStyle = `font-family:${FONT};font-size:12px;font-weight:600;color:${t.label};mso-color-alt:${t.label};`;
 
     function row(label, html) {
         return `<tr>
@@ -1089,57 +1145,153 @@ function buildCardContactGrid(data) {
         rows += row('WhatsApp', `<a href="${waLink}" style="${linkStyle}">${whatsapp}</a>`);
     }
     rows += row('Email', `<a href="mailto:${email}" style="${linkStyle}">${email}</a>`);
+    if (opts.includeWeb) {
+        rows += row('Web', `<a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${linkStyle}">${websiteLabel}</a>`);
+    }
 
     return `<table class="sig-card-contact-table sig-contact" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${rows}</table>`;
 }
 
-function buildCardLogoColumn(logoHtml, colWidth) {
-    const w = colWidth || 96;
-    return `
-    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse:collapse;width:${w}px;">
+function buildCardContactInline(data, theme) {
+    const t = theme || getWebsiteTheme(data.websiteKey);
+    const phone = escapeHtml(data.phone);
+    const email = escapeHtml(data.email);
+    const whatsapp = escapeHtml(data.whatsapp);
+    const websiteLabel = escapeHtml(data.websiteLabel);
+    const tel = sanitizePhone(data.phone);
+    const waNum = sanitizeWhatsApp(data.whatsapp);
+    const waLink = waNum ? `https://wa.me/${waNum}` : '';
+    const linkStyle = `color:${t.text};text-decoration:none;font-family:${FONT};font-size:12px;font-weight:normal;mso-color-alt:${t.text};`;
+    const sepStyle = `color:${t.titleSep};padding:0 6px;mso-color-alt:${t.titleSep};`;
+
+    let line = `<a href="tel:${escapeHtml(tel)}" style="${linkStyle}">${phone}</a>`;
+    if (data.whatsapp) {
+        line += `<span style="${sepStyle}">&middot;</span><a href="${waLink}" style="${linkStyle}">${whatsapp}</a>`;
+    }
+    line += `<span style="${sepStyle}">&middot;</span><a href="mailto:${email}" style="${linkStyle}">${email}</a>`;
+    line += `<span style="${sepStyle}">&middot;</span><a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${linkStyle}">${websiteLabel}</a>`;
+
+    return `<table class="sig-card-contact-inline sig-contact" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr>
-        <td align="left" style="padding:0;line-height:0;">
+        <td class="sig-card-contact-line" valign="top" style="padding:0;font-family:${FONT};font-size:12px;line-height:1.5;${SIG_NOWRAP}">${line}</td>
+      </tr>
+    </table>`;
+}
+
+function buildCardLogoColumn(logoHtml, colWidth, options) {
+    const opts = options || {};
+    const w = colWidth || 96;
+    const align = opts.align || 'left';
+    return `
+    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="${align}" style="border-collapse:collapse;width:${w}px;">
+      <tr>
+        <td align="${align}" style="padding:0;line-height:0;">
           ${logoHtml}
         </td>
       </tr>
     </table>`;
 }
 
-function buildCardDisclaimerSection() {
+function buildCardDisclaimerSection(theme) {
+    const t = theme || CARD_THEME_BASE;
     return `
             <tr>
               <td class="sig-disclaimer sig-card-disclaimer sig-disclaimer-text" align="justify" valign="top" width="100%"
-                style="padding:14px 0 0 0;border-top:1px solid #D1D5DB;${DISCLAIMER_LINE_STYLE}width:100%;">
+                style="padding:14px 0 0 0;border-top:1px solid ${t.disclaimerBorder};${DISCLAIMER_LINE_STYLE}width:100%;">
                 ${buildDisclaimerHtml()}
               </td>
             </tr>`;
 }
 
-function buildCardSignatureInner(data, options) {
+function buildCardSignatureAltInner(data, options) {
     const forOutlook = !!(options && options.forOutlook);
+    const theme = getWebsiteTheme(data.websiteKey);
     const name = escapeHtml(data.name);
     const title = escapeHtml(data.title);
-    const websiteLabel = escapeHtml(data.websiteLabel);
     const logoHtml = buildVerticalLogoBlock(data.websiteUrl, { width: 96, forOutlook });
-    const logoCol = buildCardLogoColumn(logoHtml, 96);
-    const contactCol = buildCardContactGrid(data);
+    const logoCol = buildCardLogoColumn(logoHtml, 96, { align: 'right' });
+    const contactCol = theme.contactsInline
+        ? buildCardContactInline(data, theme)
+        : buildCardContactGrid(data, theme, { includeWeb: true });
     const socialHtml = buildSocialIcons(data, {
         compact: true,
         iconSize: 28,
         imgSize: 14,
         rowAlign: 'left'
     });
-    const cardBg = BRAND.white;
+    const cardBg = theme.cardBg;
     const cardBgStyle = buildAntiInvertBg(cardBg);
-    const nameStyle = `font-family:${FONT};font-size:20px;font-weight:bold;color:${BRAND.navy};line-height:1.2;mso-color-alt:${BRAND.navy};`;
-    const titleMuted = `font-family:${FONT};font-size:12px;font-weight:normal;color:${BRAND.textMuted};mso-color-alt:${BRAND.textMuted};`;
-    const titleLink = `font-family:${FONT};font-size:12px;font-weight:normal;color:${BRAND.navy};text-decoration:none;mso-color-alt:${BRAND.navy};`;
+    const nameStyle = `font-family:${FONT};font-size:20px;font-weight:bold;color:${theme.name};line-height:1.2;mso-color-alt:${theme.name};`;
+    const titleStyle = `font-family:${FONT};font-size:12px;font-weight:normal;color:${theme.titleMuted};line-height:1.45;mso-color-alt:${theme.titleMuted};`;
 
     return `
-    <table class="sig-card" cellpadding="0" cellspacing="0" border="0" width="${SIG_CARD_WIDTH}"
-      style="border-collapse:separate;border:1px solid #E5E7EB;border-radius:10px;width:${SIG_CARD_WIDTH}px;max-width:${SIG_CARD_WIDTH}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+    <table class="sig-card sig-card-${theme.id} sig-card-alt" cellpadding="0" cellspacing="0" border="0" width="${SIG_CARD_WIDTH}"
+      style="border-collapse:separate;border:1px solid ${theme.cardBorder};border-radius:10px;width:${SIG_CARD_WIDTH}px;max-width:${SIG_CARD_WIDTH}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
       <tr>
-        <td bgcolor="${cardBg}" style="${cardBgStyle}border-radius:10px;padding:16px 18px 14px 18px;">
+        <td class="sig-card-surface" bgcolor="${cardBg}" style="${cardBgStyle}border-radius:10px;padding:16px 18px 14px 18px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+            <tr>
+              <td class="sig-card-body" style="padding:0;">
+                <table class="sig-card-inner sig-card-inner-alt" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td class="sig-card-details" valign="top" align="left"
+                      style="vertical-align:top;padding:0 18px 0 0;text-align:left;">
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                        <tr><td class="sig-name-text" style="padding:0 0 4px 0;${nameStyle}">${name}</td></tr>
+                        <tr><td class="sig-title-text" style="padding:0 0 8px 0;${titleStyle}">${title}</td></tr>
+                        <tr><td style="padding:0 0 10px 0;">${buildCardLightDivider()}</td></tr>
+                        <tr><td style="padding:0;">${contactCol}</td></tr>
+                        <tr>
+                          <td class="sig-card-social" style="padding:10px 0 0 0;line-height:0;">
+                            ${socialHtml}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td class="sig-card-logo-right" valign="top" align="right" width="96"
+                      style="width:96px;vertical-align:top;padding:0;text-align:right;">
+                      ${logoCol}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            ${data.includeDisclaimer ? buildCardDisclaimerSection(theme) : ''}
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function buildCardSignatureInner(data, options) {
+    const theme = getWebsiteTheme(data.websiteKey);
+    if (theme.layout === 'alt') {
+        return buildCardSignatureAltInner(data, options);
+    }
+    const forOutlook = !!(options && options.forOutlook);
+    const name = escapeHtml(data.name);
+    const title = escapeHtml(data.title);
+    const websiteLabel = escapeHtml(data.websiteLabel);
+    const logoHtml = buildVerticalLogoBlock(data.websiteUrl, { width: 96, forOutlook });
+    const logoCol = buildCardLogoColumn(logoHtml, 96);
+    const contactCol = buildCardContactGrid(data, theme);
+    const socialHtml = buildSocialIcons(data, {
+        compact: true,
+        iconSize: 28,
+        imgSize: 14,
+        rowAlign: 'left'
+    });
+    const cardBg = theme.cardBg;
+    const cardBgStyle = buildAntiInvertBg(cardBg);
+    const nameStyle = `font-family:${FONT};font-size:20px;font-weight:bold;color:${theme.name};line-height:1.2;mso-color-alt:${theme.name};`;
+    const titleMuted = `font-family:${FONT};font-size:12px;font-weight:normal;color:${theme.titleMuted};mso-color-alt:${theme.titleMuted};`;
+    const titleLink = `font-family:${FONT};font-size:12px;font-weight:normal;color:${theme.titleLink};text-decoration:none;mso-color-alt:${theme.titleLink};`;
+
+    return `
+    <table class="sig-card sig-card-${theme.id}" cellpadding="0" cellspacing="0" border="0" width="${SIG_CARD_WIDTH}"
+      style="border-collapse:separate;border:1px solid ${theme.cardBorder};border-radius:10px;width:${SIG_CARD_WIDTH}px;max-width:${SIG_CARD_WIDTH}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td class="sig-card-surface" bgcolor="${cardBg}" style="${cardBgStyle}border-radius:10px;padding:16px 18px 14px 18px;">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
             <tr>
               <td class="sig-card-header" style="padding:0;">
@@ -1148,11 +1300,11 @@ function buildCardSignatureInner(data, options) {
                   <tr>
                     <td class="sig-title-text" style="padding:0 0 12px 0;font-family:${FONT};font-size:12px;line-height:1.45;${SIG_NOWRAP}">
                       <span style="${titleMuted}">${title}</span>
-                      <span style="color:#D1D5DB;mso-color-alt:#D1D5DB;">&nbsp;|&nbsp;</span>
+                      <span style="color:${theme.titleSep};mso-color-alt:${theme.titleSep};">&nbsp;|&nbsp;</span>
                       <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="${titleLink}">${websiteLabel}</a>
                     </td>
                   </tr>
-                  <tr><td style="padding:0;">${buildCardDivider()}</td></tr>
+                  <tr><td style="padding:0;">${buildCardDivider(theme)}</td></tr>
                 </table>
               </td>
             </tr>
@@ -1179,7 +1331,7 @@ function buildCardSignatureInner(data, options) {
                 </table>
               </td>
             </tr>
-            ${data.includeDisclaimer ? buildCardDisclaimerSection() : ''}
+            ${data.includeDisclaimer ? buildCardDisclaimerSection(theme) : ''}
           </table>
         </td>
       </tr>
@@ -1332,13 +1484,16 @@ function buildResponsiveStyles() {
         .sig-col-left { padding: 0 0 8px 0 !important; white-space: normal !important; }
         .sig-col-right { padding: 0 !important; text-align: left !important; width: 100% !important; }
         .sig-card-inner { width: 100% !important; }
-        .sig-card-left, .sig-card-right {
+        .sig-card-left, .sig-card-right,
+        .sig-card-details, .sig-card-logo-right {
           display: block !important;
           width: 100% !important;
           max-width: 100% !important;
           box-sizing: border-box !important;
         }
         .sig-card-left { padding: 0 0 14px 0 !important; }
+        .sig-card-details { padding: 0 0 14px 0 !important; }
+        .sig-card-logo-right { text-align: left !important; padding: 0 0 14px 0 !important; }
         .sig-card-logo-col { width: 100% !important; max-width: 200px !important; }
         .sig-card-contact, .sig-card-contact-table td { white-space: normal !important; }
         .sig-brand-cta { padding-top: 8px !important; }
@@ -1573,19 +1728,14 @@ function templateCard(data, options) {
 }
 
 const TEMPLATES = {
-    corporate: templateCorporate,
     card: templateCard
 };
 
 /*
- * buildSignature(data) — ROUTER
- * data.template = 'classic' | 'executive' | 'compact'
- * TEMPLATES object maps name → function
- * RETURNS: complete HTML string → preview + clipboard
+ * buildSignature(data) — always Design 4 card; website selection picks theme variant
  */
 function buildSignature(data, options) {
-    const fn = TEMPLATES[data.template] || TEMPLATES.corporate;
-    return fn(data, options || {});
+    return templateCard(data, options || {});
 }
 
 /* Wraps signature in full HTML doc + color-scheme meta for downloaded .htm file */
@@ -1701,7 +1851,7 @@ function getFormData() {
         websiteKey,
         websiteUrl: website.url,
         websiteLabel: website.label,
-        template: document.getElementById('template').value,
+        template: 'card',
         emailMode: getPreviewEmailMode(),
         includeDisclaimer: document.getElementById('includeDisclaimer').checked,
         socialPlatforms
@@ -1948,16 +2098,31 @@ document.getElementById('sigForm').addEventListener('submit', (e) => {
     generateSignature();
 });
 
-/* Re-run generateSignature when template/disclaimer/social toggles change */
+function updateWebsiteDesignHint() {
+    const key = document.getElementById('websiteUrl').value;
+    const cfg = getWebsiteConfig(key);
+    const hint = document.getElementById('websiteDesignHint');
+    if (hint) {
+        const styleNote = {
+            com: 'logo left — website in header',
+            ae: 'logo top-right — website with contacts',
+            org: 'logo top-right — phone · email · website in one line'
+        };
+        hint.textContent = `${cfg.label} — same fonts as .com, ${styleNote[key] || styleNote.com}`;
+    }
+}
+
+/* Re-run generateSignature when disclaimer/social/website toggles change */
 function attachLiveUpdate(el) {
     el.addEventListener('change', () => {
+        if (el.id === 'websiteUrl') updateWebsiteDesignHint();
         if (generatedHTML && validateForm()) generateSignature();
     });
 }
-attachLiveUpdate(document.getElementById('template'));
 attachLiveUpdate(document.getElementById('includeDisclaimer'));
 attachLiveUpdate(document.getElementById('websiteUrl'));
 document.querySelectorAll('#socialToggles input').forEach((cb) => attachLiveUpdate(cb));
+updateWebsiteDesignHint();
 
 /* Debounce typing — regenerate 400ms after user stops (if already generated) */
 let regenTimer;
