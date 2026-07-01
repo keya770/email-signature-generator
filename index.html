@@ -477,7 +477,7 @@
           <option value="ae">www.tattvammarkets.ae</option>
           <option value="org">www.tattvammarkets.org</option>
         </select>
-        <p class="field-hint" id="websiteDesignHint">.com: logo left. .ae / .org: logo top-right, website with phone &amp; email.</p>
+        <p class="field-hint" id="websiteDesignHint">.com: full design with Trade Better. .ae / .org: same layout, no Trade Better.</p>
       </div>
 
       <p class="section-label">Options</p>
@@ -636,7 +636,12 @@ const WEBSITE_OPTIONS = {
         url: 'https://www.tattvammarkets.com/',
         label: 'www.tattvammarkets.com',
         designName: 'Standard',
-        theme: { id: 'com' }
+        theme: {
+            id: 'com',
+            layout: 'alt',
+            logoTagline: 'Trade Better',
+            logoTaglineColor: '#D32F2F'
+        }
     },
     ae: {
         url: 'https://www.tattvammarkets.ae/',
@@ -644,10 +649,7 @@ const WEBSITE_OPTIONS = {
         designName: 'UAE',
         theme: {
             id: 'ae',
-            layout: 'alt',
-            cardBorder: '#9DE5EC',
-            divider: '#9DE5EC',
-            disclaimerBorder: '#9DE5EC'
+            layout: 'alt'
         }
     },
     org: {
@@ -656,11 +658,7 @@ const WEBSITE_OPTIONS = {
         designName: 'Org',
         theme: {
             id: 'org',
-            layout: 'alt',
-            contactsInline: true,
-            cardBorder: '#0B1F3A',
-            divider: '#0B1F3A',
-            disclaimerBorder: '#CBD5E1'
+            layout: 'alt'
         }
     }
 };
@@ -876,14 +874,15 @@ function buildVerticalLogoBlock(websiteUrl, options) {
     const h = Math.round(w * LOGO_VERTICAL_ASPECT);
     const url = websiteUrl || WEBSITE_OPTIONS.com.url;
     const src = opts.forOutlook ? getOutlookVerticalLogoUrl() : getVerticalLogoUrl();
+    const imgAlign = opts.logoAlign || 'left';
 
     if (opts.forOutlook) {
-        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="${imgAlign}" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-${imgAlign === 'center' ? 'left:auto;margin-right:auto;' : imgAlign === 'right' ? 'left:auto;' : '0'}">
       <tr>
-        <td align="left" valign="top" width="${w}" style="width:${w}px;padding:0;line-height:0;font-size:0;">
+        <td align="${imgAlign}" valign="top" width="${w}" style="width:${w}px;padding:0;line-height:0;font-size:0;text-align:${imgAlign};">
           <a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;">
             <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0"
-              style="display:block;border:0;outline:none;width:${w}px;height:${h}px;mso-width-alt:${w};mso-height-alt:${h};-ms-interpolation-mode:bicubic;" />
+              style="display:block;border:0;outline:none;width:${w}px;height:${h}px;mso-width-alt:${w};mso-height-alt:${h};-ms-interpolation-mode:bicubic;${imgAlign === 'center' ? 'margin:0 auto;' : imgAlign === 'right' ? 'margin-left:auto;' : ''}" />
           </a>
         </td>
       </tr>
@@ -892,7 +891,7 @@ function buildVerticalLogoBlock(websiteUrl, options) {
 
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
       <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0" class="sig-logo-img sig-logo-vertical"
-        style="display:block;border:0;outline:none;width:${w}px;height:${h}px;max-width:${w}px;mso-width-percent:0;-ms-interpolation-mode:bicubic;" />
+        style="display:block;border:0;outline:none;width:${w}px;height:${h}px;max-width:${w}px;mso-width-percent:0;-ms-interpolation-mode:bicubic;${imgAlign === 'center' ? 'margin:0 auto;' : imgAlign === 'right' ? 'margin-left:auto;' : ''}" />
     </a>`;
 }
 
@@ -1182,13 +1181,25 @@ function buildCardLogoColumn(logoHtml, colWidth, options) {
     const opts = options || {};
     const w = colWidth || 96;
     const align = opts.align || 'left';
-    return `
-    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="${align}" style="border-collapse:collapse;width:${w}px;">
+    const hasTagline = !!opts.tagline;
+    const taglineColor = opts.taglineColor || '#E53935';
+    const logoAlign = hasTagline ? 'center' : align;
+    const taglineAlign = opts.taglineAlign || (hasTagline ? 'center' : align);
+    const tableAlign = hasTagline && align === 'right' ? 'right' : align;
+    const taglineRow = hasTagline ? `
       <tr>
-        <td align="${align}" style="padding:0;line-height:0;">
+        <td align="${taglineAlign}" class="sig-logo-tagline" width="${w}"
+          style="padding:1px 0 0 0;width:${w}px;text-align:${taglineAlign};font-family:${FONT};font-size:10px;line-height:1.15;mso-line-height-rule:exactly;">
+          <span style="color:${taglineColor} !important;mso-color-alt:${taglineColor};-webkit-text-fill-color:${taglineColor} !important;font-weight:700;letter-spacing:0.45px;display:inline-block;white-space:nowrap;margin-top:-1px;">${escapeHtml(opts.tagline)}</span>
+        </td>
+      </tr>` : '';
+    return `
+    <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="${tableAlign}" style="border-collapse:collapse;width:${w}px;${tableAlign === 'right' ? 'margin-left:auto;' : ''}">
+      <tr>
+        <td align="${logoAlign}" width="${w}" style="width:${w}px;padding:0;line-height:0;font-size:0;text-align:${logoAlign};">
           ${logoHtml}
         </td>
-      </tr>
+      </tr>${taglineRow}
     </table>`;
 }
 
@@ -1208,11 +1219,20 @@ function buildCardSignatureAltInner(data, options) {
     const theme = getWebsiteTheme(data.websiteKey);
     const name = escapeHtml(data.name);
     const title = escapeHtml(data.title);
-    const logoHtml = buildVerticalLogoBlock(data.websiteUrl, { width: 96, forOutlook });
-    const logoCol = buildCardLogoColumn(logoHtml, 96, { align: 'right' });
-    const contactCol = theme.contactsInline
-        ? buildCardContactInline(data, theme)
-        : buildCardContactGrid(data, theme, { includeWeb: true });
+    const logoW = 96;
+    const logoCentered = !!theme.logoTagline;
+    const logoHtml = buildVerticalLogoBlock(data.websiteUrl, {
+        width: logoW,
+        forOutlook,
+        logoAlign: logoCentered ? 'center' : 'left'
+    });
+    const logoCol = buildCardLogoColumn(logoHtml, logoW, {
+        align: 'right',
+        tagline: theme.logoTagline || '',
+        taglineColor: theme.logoTaglineColor || '#D32F2F',
+        taglineAlign: 'center'
+    });
+    const contactCol = buildCardContactGrid(data, theme, { includeWeb: true });
     const socialHtml = buildSocialIcons(data, {
         compact: true,
         iconSize: 28,
@@ -1443,6 +1463,7 @@ function buildResponsiveStyles() {
       .sig-card-contact { white-space: nowrap !important; font-size: 12px !important; line-height: 1.5 !important; }
       .sig-card .sig-logo-img { max-width: 96px !important; }
       .sig-card .sig-logo-vertical { max-width: 96px !important; width: 96px !important; height: auto !important; }
+      .sig-logo-tagline span { color: #D32F2F !important; -webkit-text-fill-color: #D32F2F !important; font-size: 10px !important; font-weight: 700 !important; }
       .sig-logo-vertical { width: 96px !important; height: 52px !important; max-width: 96px !important; }
       .sig-logo-img { max-width: 140px !important; }
         .sig-logo-white { max-width: 140px; }
@@ -2104,11 +2125,11 @@ function updateWebsiteDesignHint() {
     const hint = document.getElementById('websiteDesignHint');
     if (hint) {
         const styleNote = {
-            com: 'logo left — website in header',
-            ae: 'logo top-right — website with contacts',
-            org: 'logo top-right — phone · email · website in one line'
+            com: 'logo top-right + red Trade Better',
+            ae: 'same layout — no Trade Better',
+            org: 'same layout — no Trade Better'
         };
-        hint.textContent = `${cfg.label} — same fonts as .com, ${styleNote[key] || styleNote.com}`;
+        hint.textContent = `${cfg.label} — ${styleNote[key] || styleNote.com}`;
     }
 }
 
