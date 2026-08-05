@@ -1,0 +1,146 @@
+Copy/download embedding, Outlook-safe background, logo size CSS, aur dark-mode locks fix kar raha hoon.
+=== new_string ===
+async function embedOutlookAssets(html) {
+    let output = await embedOutlookImages(html);
+    if (!output) return output;
+
+    // Longer paths first so short names never take a prefix bite out of longer ones
+    const gifFiles = [...SIG_GIF_FILES].sort((a, b) => b.length - a.length);
+    for (const file of gifFiles) {
+        output = await embedAssetFile(output, file);
+    }
+    const iconFiles = [...SIG_ICON_FILES].sort((a, b) => b.length - a.length);
+    for (const file of iconFiles) {
+        output = await embedAssetFile(output, file);
+    }
+    /* Design 1 watermark + brand logo — required for copy/download parity */
+    output = await embedAssetFile(output, DESIGN1_BG_FILE);
+    output = await embedAssetFile(output, LOGO_FILE);
+
+    return output;
+}
+=== old_string ===
+async function embedOutlookAssets(html) {
+    let output = await embedOutlookImages(html);
+    if (!output) return output;
+
+    // Longer paths first so short names never take a prefix bite out of longer ones
+    const gifFiles = [...SIG_GIF_FILES].sort((a, b) => b.length - a.length);
+    for (const file of gifFiles) {
+        output = await embedAssetFile(output, file);
+    }
+    const iconFiles = [...SIG_ICON_FILES].sort((a, b) => b.length - a.length);
+    for (const file of iconFiles) {
+        output = await embedAssetFile(output, file);
+    }
+
+    return output;
+}
+=== new_string ===
+    const logoW = 118;
+    const logoH = Math.round(logoW * LOGO_VERTICAL_ASPECT);
+    const logoSrc = getAssetUrl(LOGO_FILE);
+    const bgSrc = opts.design1BgDataUrl || getAssetUrl(DESIGN1_BG_FILE);
+    /* Full-area soft white shade + faded bg logo on right (CSS + Outlook background attr) */
+    const topBgStyle = `background-color:#FFFFFF;background-image:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72)),url('${bgSrc}'),linear-gradient(#FFFFFF,#FFFFFF);background-repeat:no-repeat,no-repeat,no-repeat;background-position:left top,88% 48%,left top;background-size:100% 100%,430px auto,100% 100%;mso-color-alt:#FFFFFF;`;
+    const nameSideWhiteShade = `background-color:transparent;background-image:radial-gradient(ellipse 260px 210px at 22% 58%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.90) 38%, rgba(255,255,255,0.45) 68%, transparent 100%);background-repeat:no-repeat;background-position:left top;background-size:100% 100%;`;
+    const logoBgStyle = `${whiteBg}`;
+    const contactRows = buildComContactIconRows(data, linkStyle);
+    const socialHtml = buildComFlatSocialRow(data, {
+        variant: 'white', size: 24, gap: 8, align: 'left', iconDataUrls: opts.iconDataUrls
+    });
+    const footerGap = 18;
+
+    return `
+    <table class="sig-com-executive sig-premium-exec sig-com-classic" cellpadding="0" cellspacing="0" border="0" width="${width}"
+      style="border-collapse:collapse;border:1px solid #D5E8EC;width:${width}px;max-width:${width}px;mso-table-lspace:0pt;mso-table-rspace:0pt;background:#FFFFFF;">
+      <tr>
+        <td width="${accentW}" bgcolor="${COM_TEAL}" style="width:${accentW}px;${tealBg}padding:0;font-size:0;line-height:0;mso-color-alt:${COM_TEAL};">&nbsp;</td>
+        <td colspan="2" class="sig-com-exec-top" bgcolor="#FFFFFF" background="${bgSrc}"
+          style="${topBgStyle}padding:0;">
+          <!-- watermark img for clients that strip CSS backgrounds; opacity fade + white veil -->
+          <div class="sig-com-exec-bg-wrap" style="position:relative;width:100%;overflow:hidden;">
+            <img src="${bgSrc}" alt="" width="280" height="280" border="0"
+              class="sig-com-exec-bg-img"
+              style="position:absolute;right:-36px;top:50%;margin-top:-140px;width:280px;height:280px;opacity:0.28;border:0;outline:none;display:block;z-index:0;pointer-events:none;-ms-interpolation-mode:bicubic;" />
+            <div class="sig-com-exec-bg-veil" style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(255,255,255,0.72);z-index:1;pointer-events:none;"></div>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;position:relative;z-index:2;">
+            <tr>
+        <td width="${midW}" valign="top" style="width:${midW}px;${nameSideWhiteShade}padding:18px 8px 14px 18px;vertical-align:top;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+            <tr><td class="sig-name-text" style="padding:0;${nameStyle}">${buildOutlookSafeText(name, nameStyle, COM_NAVY)}</td></tr>
+            <tr><td style="padding:6px 0 0 0;line-height:0;font-size:0;">${buildComStaticNameUnderline(160)}</td></tr>
+            <tr><td class="sig-title-text" style="padding:8px 0 12px 0;${titleStyle}">${title}</td></tr>
+            <tr><td style="padding:0 0 12px 0;"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${contactRows}</table></td></tr>
+            <tr><td style="padding:0;border-top:1px solid #E6EEF1;line-height:0;font-size:0;" height="1">&nbsp;</td></tr>
+          </table>
+        </td>
+        <td width="${logoColW}" bgcolor="#FFFFFF" valign="middle" align="center"
+          style="width:${logoColW}px;${logoBgStyle}padding:14px 6px 12px 0;vertical-align:middle;text-align:center;background:transparent;">
+          <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;margin:0 auto;">
+            <tr>
+              <td align="center" style="padding:0;line-height:0;font-size:0;text-align:center;background:transparent;">
+                <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="text-decoration:none;border:0;background:transparent;">
+                  <img src="${logoSrc}" alt="Tattvam Markets" width="${logoW}" height="${logoH}" border="0"
+                    class="sig-brand-logo sig-logo-img sig-logo-vertical sig-premium-logo sig-com-exec-logo"
+                    style="display:block;border:0;margin:0 auto;width:${logoW}px;height:${logoH}px;background:transparent;-ms-interpolation-mode:bicubic;" />
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+            </tr>
+          </table>
+          </div>
+        </td>
+      </tr>
+=== old_string ===
+    const logoW = 118;
+    const logoH = Math.round(logoW * LOGO_VERTICAL_ASPECT);
+    const logoSrc = getAssetUrl(LOGO_FILE);
+    const bgSrc = getAssetUrl(DESIGN1_BG_FILE);
+    /* Full-area soft white shade + faded bg logo on right */
+    const topBgStyle = `background-color:#FFFFFF;background-image:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72)),url('${bgSrc}'),linear-gradient(#FFFFFF,#FFFFFF);background-repeat:no-repeat,no-repeat,no-repeat;background-position:left top,88% 48%,left top;background-size:100% 100%,430px auto,100% 100%;mso-color-alt:#FFFFFF;`;
+    const nameSideWhiteShade = `background-color:transparent;background-image:radial-gradient(ellipse 260px 210px at 22% 58%, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.90) 38%, rgba(255,255,255,0.45) 68%, transparent 100%);background-repeat:no-repeat;background-position:left top;background-size:100% 100%;`;
+    const logoBgStyle = `${whiteBg}`;
+    const contactRows = buildComContactIconRows(data, linkStyle);
+    const socialHtml = buildComFlatSocialRow(data, {
+        variant: 'white', size: 24, gap: 8, align: 'left', iconDataUrls: opts.iconDataUrls
+    });
+    const footerGap = 18;
+
+    return `
+    <table class="sig-com-executive sig-premium-exec sig-com-classic" cellpadding="0" cellspacing="0" border="0" width="${width}"
+      style="border-collapse:collapse;border:1px solid #D5E8EC;width:${width}px;max-width:${width}px;mso-table-lspace:0pt;mso-table-rspace:0pt;background:#FFFFFF;">
+      <tr>
+        <td width="${accentW}" bgcolor="${COM_TEAL}" style="width:${accentW}px;${tealBg}padding:0;font-size:0;line-height:0;mso-color-alt:${COM_TEAL};">&nbsp;</td>
+        <td colspan="2" bgcolor="#FFFFFF" style="${topBgStyle}padding:0;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+            <tr>
+        <td width="${midW}" valign="top" style="width:${midW}px;${nameSideWhiteShade}padding:18px 8px 14px 18px;vertical-align:top;">
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;width:100%;">
+            <tr><td class="sig-name-text" style="padding:0;${nameStyle}">${buildOutlookSafeText(name, nameStyle, COM_NAVY)}</td></tr>
+            <tr><td style="padding:6px 0 0 0;line-height:0;font-size:0;">${buildComStaticNameUnderline(160)}</td></tr>
+            <tr><td class="sig-title-text" style="padding:8px 0 12px 0;${titleStyle}">${title}</td></tr>
+            <tr><td style="padding:0 0 12px 0;"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${contactRows}</table></td></tr>
+            <tr><td style="padding:0;border-top:1px solid #E6EEF1;line-height:0;font-size:0;" height="1">&nbsp;</td></tr>
+          </table>
+        </td>
+        <td width="${logoColW}" bgcolor="#FFFFFF" valign="middle" align="center"
+          style="width:${logoColW}px;${logoBgStyle}padding:14px 6px 12px 0;vertical-align:middle;text-align:center;background:transparent;">
+          <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;margin:0 auto;">
+            <tr>
+              <td align="center" style="padding:0;line-height:0;font-size:0;text-align:center;background:transparent;">
+                <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="text-decoration:none;border:0;background:transparent;">
+                  <img src="${logoSrc}" alt="Tattvam Markets" width="${logoW}" height="${logoH}" border="0"
+                    class="sig-brand-logo sig-logo-img sig-logo-vertical sig-premium-logo"
+                    style="display:block;border:0;margin:0 auto;width:${logoW}px;height:${logoH}px;background:transparent;-ms-interpolation-mode:bicubic;" />
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+            </tr>
+          </table>
+        </td>
+      </tr>

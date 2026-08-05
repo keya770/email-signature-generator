@@ -1,0 +1,13 @@
+﻿entries 12
+1780 markers=IMG_BG len=552
+1780 markers=FULL_FN,IMG_BG len=9588
+1781 markers=IMG_BG len=3505
+1782 markers=IMG_BG len=4333
+1787 markers=FULL_FN,IMG_BG len=1815
+1801 markers=IMG_BG,FRAME len=10475
+1802 markers=IMG_BG,FRAME len=9693
+1802 TEXT: Images full width rakhte hue top + right frame lines fix kar raha hoon.
+1810 TEXT: Mail share ke baad top/background toot raha hai because current layout mein pull-up overlay use ho raha hai. Ab main Design 1 ko share-safe banaunga taake email bhejne ke baad bhi structure
+1884 TEXT: Stable sent-email version bana raha hoon: no background-image dependence, pure tables + real images + clickable links. Isse Outlook/Gmail mein zyada consistent rahega.
+1891 markers=FRAME,LIGHT_UL len=8635
+1892 TEXT: Finding the current Design 1 code to apply the underline, frame, and disclaimer updates.
