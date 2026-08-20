@@ -1,4 +1,4 @@
-﻿fix this and start me project make sure everything uis working<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- =============================================================================
   INTERVIEW PREP — EMAIL SIGNATURE GENERATOR (Task 1)
   =============================================================================
@@ -350,8 +350,6 @@
             border: 1px solid #D1D5DB !important;
             width: 100% !important;
             max-width: 100% !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
         }
         .preview-box .sig-d5-inner {
             width: 100% !important;
@@ -2745,7 +2743,8 @@ function buildPremiumContactRow(iconHtml, contentHtml, padBottom) {
       <td valign="top" style="padding:0 0 ${padBottom}px 0;">
         <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
           <tr>
-            <td valign="middle" width="28" style="width:28px;padding:0 10px 0 0;line-height:0;font-size:0;vertical-align:middle;">
+            <td valign="middle" width="28" height="16"
+              style="width:28px;height:16px;padding:0 10px 0 0;font-size:16px;line-height:16px;mso-line-height-rule:at-least;vertical-align:middle;">
               ${iconHtml}
             </td>
             <td valign="middle" style="vertical-align:middle;font-family:${FONT};font-size:15px;line-height:1.4;">
@@ -2934,12 +2933,13 @@ function buildComFlatSocialRow(data, options) {
             facebook: 'Facebook'
         };
         const imgComment = labelComments[key] ? `<!-- ${labelComments[key]} -->\n          ` : '';
-        /* Solid img + fixed width td — Outlook drops transparent / zero-size social icons on paste */
-        return `<td width="${size + pad}" style="width:${size + pad}px;padding:0 ${pad}px 0 0;line-height:0;font-size:0;border:0;mso-line-height-rule:exactly;">
-          ${imgComment}<a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;border:0;line-height:0;">
+        /* line-height must be >= icon height — Classic Outlook crops imgs when line-height:0 + exactly */
+        return `<td width="${size + pad}" height="${size}" valign="top"
+          style="width:${size + pad}px;height:${size}px;padding:0 ${pad}px 0 0;border:0;font-size:${size}px;line-height:${size}px;mso-line-height-rule:at-least;">
+          ${imgComment}<a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;border:0;">
             <img src="${src}" alt="${escapeHtml(s.alt)}" width="${size}" height="${size}" border="0"
               class="sig-social-flat-icon"
-              style="display:block;border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;max-width:${size}px;-ms-interpolation-mode:bicubic;" />
+              style="display:block;border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;-ms-interpolation-mode:bicubic;" />
           </a>
         </td>`;
     }).join('');
@@ -3323,7 +3323,7 @@ function buildComDesignFantastic(data, options) {
     const d5Styles = `<style type="text/css">
 .sig-d5-root,.sig-d5-frame,.sig-d5-inner{width:${width}px!important;max-width:${width}px!important;border-collapse:collapse!important;border-spacing:0!important;mso-table-lspace:0pt!important;mso-table-rspace:0pt!important}
 .sig-d5-root{border:0!important}
-.sig-d5-frame{width:100%!important;max-width:100%!important;padding:0!important;margin:0!important;border:1px solid ${cardBorder}!important;background-color:#FFFFFF!important;font-size:0!important;line-height:0!important}
+.sig-d5-frame{width:100%!important;max-width:100%!important;padding:0!important;margin:0!important;border:1px solid ${cardBorder}!important;background-color:#FFFFFF!important}
 .sig-d5-inner{width:100%!important;max-width:100%!important;table-layout:fixed!important}
 .sig-d5-pad{padding:${padTop}px ${padX}px ${padBottom}px ${padX}px!important;border:0!important;border-left:0!important}
 .sig-d5-body{width:${contentW}px!important;max-width:${contentW}px!important;table-layout:fixed!important}
@@ -3338,24 +3338,13 @@ display:block!important;margin:0 auto!important;width:${logoW}px!important;max-w
 }
 .sig-d5-social-cell img.sig-social-flat-icon{width:${socialSize}px!important;height:${socialSize}px!important;max-width:${socialSize}px!important}
 .sig-d5-title,.sig-d5-root .sig-title-text{color:${titleColor}!important}
-.sig-d5-footer-cell,.sig-d5-footer-link,.sig-d5-disc-cell{width:100%!important;max-width:100%!important;padding:0!important;margin:0!important;line-height:0!important;font-size:0!important;border:0!important;background:transparent!important;background-color:transparent!important}
-.sig-d5-footer-link{display:block!important;width:100%!important;max-width:100%!important;text-decoration:none!important;line-height:0!important;font-size:0!important;margin:0!important;padding:0!important}
+.sig-d5-footer-cell,.sig-d5-footer-link,.sig-d5-disc-cell{width:100%!important;max-width:100%!important;padding:0!important;margin:0!important;border:0!important;background:transparent!important;background-color:transparent!important}
+.sig-d5-footer-link{display:block!important;width:100%!important;max-width:100%!important;text-decoration:none!important;margin:0!important;padding:0!important}
 .sig-com-d5-footer-img{display:block!important;width:100%!important;max-width:100%!important;height:${footerH}px!important;border:0!important;outline:none!important;margin:0!important;padding:0!important;vertical-align:bottom!important}
 .sig-d5-disc,.sig-d5-disc-cell,.sig-d5-root .sig-disclaimer-gray-wrap{width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;border:0!important;border-top:0!important}
 .sig-d5-left-accent{display:none!important;width:0!important;max-width:0!important;overflow:hidden!important;font-size:0!important;line-height:0!important}
-.sig-d5-root .sig-com-name-underline{display:block!important;height:auto!important;overflow:visible!important;padding:4px 0 0 0!important;line-height:0!important;font-size:0!important}
+.sig-d5-root .sig-com-name-underline{padding:4px 0 0 0!important;line-height:0!important;font-size:0!important}
 .sig-d5-root .sig-com-name-underline td{height:3px!important}
-@media only screen and (max-width:620px){
-.sig-d5-root,.sig-d5-frame,.sig-d5-inner,.sig-d5-disc,.sig-d5-footer-cell,.sig-d5-disc-cell,.sig-d5-footer-link,.sig-com-d5-footer-img{width:100%!important;max-width:100%!important}
-.sig-com-d5-footer-img{height:auto!important}
-.sig-d5-pad{padding:14px 12px 12px 12px!important;border:0!important;border-left:0!important}
-.sig-d5-body,.sig-d5-col-info,.sig-d5-col-brand{width:100%!important;max-width:100%!important;display:block!important}
-.sig-d5-col-gap,.sig-d5-col-rightpad,.sig-d5-left-accent{display:none!important;width:0!important;height:0!important;overflow:hidden!important;font-size:0!important;line-height:0!important}
-.sig-d5-col-brand{padding-top:14px!important;text-align:center!important}
-.sig-d5-name,.sig-d5-name b,.sig-d5-name font{font-size:18px!important}
-.sig-d5-logo{width:110px!important;max-width:110px!important;height:auto!important}
-.sig-d5-social-cell img.sig-social-flat-icon{width:24px!important;height:24px!important;max-width:24px!important}
-}
 </style>`;
 
     const infoHtml = `
@@ -3391,17 +3380,25 @@ display:block!important;margin:0 auto!important;width:${logoW}px!important;max-w
         style="border-collapse:collapse;width:${brandW}px;margin:0 auto;mso-table-lspace:0pt;mso-table-rspace:0pt;">
         <tr>
           <td class="sig-d5-logo-cell" align="center" valign="top" width="${brandW}"
-            style="padding:0 0 10px 0;width:${brandW}px;line-height:0;font-size:0;text-align:center;mso-line-height-rule:exactly;">
-            <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="text-decoration:none;border:0;">
-              <img src="${logoSrc}" alt="Tattvam Markets" width="${logoW}" height="${logoH}" border="0"
-                class="sig-brand-logo sig-logo-img sig-logo-vertical sig-premium-logo sig-d5-logo"
-                style="display:block;border:0;outline:none;margin:0 auto;width:${logoW}px;height:${logoH}px;max-width:${logoW}px;-ms-interpolation-mode:bicubic;" />
-            </a>
+            style="padding:0 0 10px 0;width:${brandW}px;text-align:center;">
+            <table cellpadding="0" cellspacing="0" border="0" role="presentation" width="${logoW}" height="${logoH}" align="center"
+              style="border-collapse:collapse;width:${logoW}px;height:${logoH}px;margin:0 auto;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+              <tr>
+                <td align="center" valign="top" width="${logoW}" height="${logoH}"
+                  style="width:${logoW}px;height:${logoH}px;padding:0;font-size:${logoH}px;line-height:${logoH}px;mso-line-height-rule:at-least;">
+                  <a href="${escapeHtml(data.websiteUrl)}" target="_blank" style="text-decoration:none;border:0;">
+                    <img src="${logoSrc}" alt="Tattvam Markets" width="${logoW}" height="${logoH}" border="0"
+                      class="sig-brand-logo sig-logo-img sig-logo-vertical sig-premium-logo sig-d5-logo"
+                      style="display:block;border:0;outline:none;width:${logoW}px;height:${logoH}px;-ms-interpolation-mode:bicubic;" />
+                  </a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         ${socialHtml ? `<tr>
-          <td class="sig-d5-social-cell" align="center" valign="top" width="${brandW}"
-            style="padding:0;width:${brandW}px;line-height:0;font-size:0;text-align:center;mso-line-height-rule:exactly;">
+          <td class="sig-d5-social-cell" align="center" valign="top" width="${brandW}" height="${socialSize}"
+            style="padding:0;width:${brandW}px;height:${socialSize}px;text-align:center;font-size:${socialSize}px;line-height:${socialSize}px;mso-line-height-rule:at-least;">
             ${socialHtml}
           </td>
         </tr>` : ''}
@@ -3440,7 +3437,7 @@ display:block!important;margin:0 auto!important;width:${logoW}px!important;max-w
       style="border-collapse:collapse;border:0;width:${width}px;max-width:${width}px;table-layout:fixed;background-color:#FFFFFF;mso-table-lspace:0pt;mso-table-rspace:0pt;">
       <tr>
         <td class="sig-d5-frame" bgcolor="#FFFFFF"
-          style="padding:0;margin:0;border:1px solid ${cardBorder};background-color:#FFFFFF;font-size:0;line-height:0;">
+          style="padding:0;margin:0;border:1px solid ${cardBorder};background-color:#FFFFFF;">
           <table class="sig-d5-inner" cellpadding="0" cellspacing="0" border="0" width="100%" role="presentation"
             style="border-collapse:collapse;width:100%;table-layout:fixed;border:0;mso-table-lspace:0pt;mso-table-rspace:0pt;">
             <tr>
@@ -3465,14 +3462,14 @@ display:block!important;margin:0 auto!important;width:${logoW}px!important;max-w
               </td>
             </tr>
             <tr>
-              <td class="sig-d5-footer-cell"
-                style="padding:0;width:100%;line-height:0;font-size:0;border:0;background:transparent;background-color:transparent;mso-line-height-rule:exactly;">
+              <td class="sig-d5-footer-cell" height="${footerH}"
+                style="padding:0;width:100%;height:${footerH}px;font-size:${footerH}px;line-height:${footerH}px;mso-line-height-rule:at-least;border:0;background:transparent;background-color:transparent;">
                 <a class="sig-d5-footer-link" href="${escapeHtml(data.websiteUrl || DESIGN5_FOOTER_LINK)}" target="_blank"
-                  style="display:block;text-decoration:none;border:0;line-height:0;font-size:0;width:100%;max-width:100%;">
+                  style="text-decoration:none;border:0;">
                   <img src="${footerImgSrc}" alt="Trade Better — ${escapeHtml(data.websiteLabel || 'www.tattvammarkets.com')}"
                     width="${width}" height="${footerH}" border="0"
                     class="sig-com-d5-footer-img"
-                    style="display:block;border:0;outline:none;text-decoration:none;width:100%;max-width:100%;height:${footerH}px;margin:0;padding:0;-ms-interpolation-mode:bicubic;" />
+                    style="display:block;border:0;outline:none;text-decoration:none;width:${width}px;height:${footerH}px;margin:0;padding:0;-ms-interpolation-mode:bicubic;" />
                 </a>
               </td>
             </tr>
@@ -3681,7 +3678,7 @@ function buildSimpleTealIcon(file, alt, size, iconDataUrls) {
     }
     return `<img src="${src}" alt="${escapeHtml(alt || '')}" width="${s}" height="${s}" border="0"
       class="sig-contact-icon"
-      style="display:inline-block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;max-width:${s}px;min-width:${s}px;background:transparent;-ms-interpolation-mode:bicubic;" />`;
+      style="display:block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;-ms-interpolation-mode:bicubic;" />`;
 }
 
 function buildOrgSimpleContactRow(iconHtml, contentHtml, padBottom) {
@@ -4082,8 +4079,6 @@ function buildResponsiveStyles() {
         border: 1px solid #D1D5DB !important;
         border-left-color: #D1D5DB !important;
         background-color: #FFFFFF !important;
-        font-size: 0 !important;
-        line-height: 0 !important;
       }
       .sig-d5-inner {
         width: 100% !important;
@@ -4164,8 +4159,6 @@ function buildResponsiveStyles() {
         width: 100% !important;
         max-width: 100% !important;
         padding: 0 !important;
-        line-height: 0 !important;
-        font-size: 0 !important;
         border: 0 !important;
       }
       .sig-d5-footer-cell {
@@ -4177,13 +4170,11 @@ function buildResponsiveStyles() {
         width: 100% !important;
         max-width: 100% !important;
         text-decoration: none !important;
-        line-height: 0 !important;
-        font-size: 0 !important;
       }
       .sig-com-d5-footer-img {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
+        width: ${SIG_PREMIUM_WIDTH}px !important;
+        max-width: ${SIG_PREMIUM_WIDTH}px !important;
+        height: ${Math.round((DESIGN5_FOOTER_NATURAL_H / DESIGN5_FOOTER_NATURAL_W) * SIG_PREMIUM_WIDTH)}px !important;
         display: block !important;
         border: 0 !important;
       }
