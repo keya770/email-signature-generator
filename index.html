@@ -357,9 +357,9 @@
         }
         .preview-box .sig-d5-root .sig-com-d5-footer-img,
         .preview-box .sig-com-d5-footer-img {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: auto !important;
+            width: 620px !important;
+            max-width: 620px !important;
+            height: 54px !important;
             display: block !important;
         }
         .preview-box .sig-d5-root .sig-d5-footer-cell,
@@ -905,10 +905,12 @@ const COM_TITLE_PILL_FILE = 'premium-gifs/com-title-pill.png';
 const COM_FOOTER_BAR_FILE = 'premium-gifs/com-footer-bar.png';
 /* Design 5 — TRADE BETTER gradient footer bar (disclaimer is HTML below it) */
 const DESIGN5_FOOTER_DISCLAIMER_FILE = 'design5-footer-disclaimer.png';
+const DESIGN5_FOOTER_ORG_FILE = 'design5-footer-org.png';
 /* Source art exported 2x (1240×H) for crisp display at 620px */
 const DESIGN5_FOOTER_NATURAL_W = 1240;
 const DESIGN5_FOOTER_NATURAL_H = 108;
 const DESIGN5_FOOTER_LINK = 'https://www.tattvammarkets.com/';
+const DESIGN5_FOOTER_ORG_LINK = 'https://www.tattvammarkets.org/';
 const DESIGN5_ACCENT = '#183660';
 const ORG_PREMIUM_GIF_FILES = [
     'premium-gifs/org-top.gif',
@@ -1237,7 +1239,7 @@ function rewriteHtmlForPortal(html) {
         LOGO_FILE, DESIGN1_BG_FILE, DESIGN1_WATERMARK_FILE, DESIGN1_WATERMARK_MARK_FILE,
         DESIGN1_TOP_FULL_FILE, DESIGN1_FOOTER_FULL_FILE, DESIGN1_FOOTER_BAR_FILE,
         DESIGN1_BG_TOP_FILE, DESIGN1_BG_FOOTER_FILE, NAME_UNDERLINE_GIF_FILE,
-        TRADE_BETTER_ICON_FILE, TRADE_BETTER_LOGO_FILE, DESIGN5_FOOTER_DISCLAIMER_FILE,
+        TRADE_BETTER_ICON_FILE, TRADE_BETTER_LOGO_FILE, DESIGN5_FOOTER_DISCLAIMER_FILE, DESIGN5_FOOTER_ORG_FILE,
         ...SIG_ICON_FILES, ...SIG_GIF_FILES
     ];
     assetFiles.sort((a, b) => b.length - a.length).forEach((file) => {
@@ -3311,10 +3313,12 @@ function buildComDesignFantastic(data, options) {
     const nameUnderline = buildComStaticNameUnderline(140, nameUnderlineColor, 3);
 
     const footerH = Math.round((DESIGN5_FOOTER_NATURAL_H / DESIGN5_FOOTER_NATURAL_W) * width);
+    const footerFile = data.websiteKey === 'org' ? DESIGN5_FOOTER_ORG_FILE : DESIGN5_FOOTER_DISCLAIMER_FILE;
+    const footerLink = data.websiteUrl || (data.websiteKey === 'org' ? DESIGN5_FOOTER_ORG_LINK : DESIGN5_FOOTER_LINK);
     let footerImgSrc = (opts.iconDataUrls && (
-        opts.iconDataUrls[DESIGN5_FOOTER_DISCLAIMER_FILE] ||
-        opts.iconDataUrls['design5-footer-disclaimer.png']
-    )) || getAssetUrl(DESIGN5_FOOTER_DISCLAIMER_FILE);
+        opts.iconDataUrls[footerFile] ||
+        opts.iconDataUrls[footerFile.split('/').pop()]
+    )) || getAssetUrl(footerFile);
     if (footerImgSrc && !/^data:/i.test(footerImgSrc) && !/^https?:\/\//i.test(footerImgSrc) && !/^cid:/i.test(footerImgSrc)) {
         try { footerImgSrc = new URL(footerImgSrc, window.location.href).href; } catch (_) { /* keep */ }
     }
@@ -3464,9 +3468,9 @@ display:block!important;margin:0 auto!important;width:${logoW}px!important;max-w
             <tr>
               <td class="sig-d5-footer-cell" height="${footerH}"
                 style="padding:0;width:100%;height:${footerH}px;font-size:${footerH}px;line-height:${footerH}px;mso-line-height-rule:at-least;border:0;background:transparent;background-color:transparent;">
-                <a class="sig-d5-footer-link" href="${escapeHtml(data.websiteUrl || DESIGN5_FOOTER_LINK)}" target="_blank"
+                <a class="sig-d5-footer-link" href="${escapeHtml(footerLink)}" target="_blank"
                   style="text-decoration:none;border:0;">
-                  <img src="${footerImgSrc}" alt="Trade Better — ${escapeHtml(data.websiteLabel || 'www.tattvammarkets.com')}"
+                  <img src="${footerImgSrc}" alt="Trade Better — ${escapeHtml(data.websiteLabel || (data.websiteKey === 'org' ? 'www.tattvammarkets.org' : 'www.tattvammarkets.com'))}"
                     width="${width}" height="${footerH}" border="0"
                     class="sig-com-d5-footer-img"
                     style="display:block;border:0;outline:none;text-decoration:none;width:${width}px;height:${footerH}px;margin:0;padding:0;-ms-interpolation-mode:bicubic;" />
@@ -5549,6 +5553,8 @@ async function embedOutlookAssets(html) {
         'design1-footer-bar.png',
         DESIGN5_FOOTER_DISCLAIMER_FILE,
         'design5-footer-disclaimer.png',
+        DESIGN5_FOOTER_ORG_FILE,
+        'design5-footer-org.png',
         LOGO_FILE,
         'Tattvam_VLogo_Color.png',
         'Tattvam_VLogo_Transparent.png',
@@ -5768,6 +5774,7 @@ function generateSignature() {
             DESIGN1_BG_FOOTER_FILE,
             COM_FOOTER_BAR_FILE,
             DESIGN5_FOOTER_DISCLAIMER_FILE,
+            DESIGN5_FOOTER_ORG_FILE,
             LOGO_FILE
         ];
         files.forEach((file) => { delete cachedLogoGifDataUrls[file]; });
