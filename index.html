@@ -42,6 +42,12 @@
         #previewBox a {
             box-sizing: content-box !important;
         }
+        #previewBox .sig-card-alt .sig-logo-vertical,
+        #previewBox .sig-card-alt .sig-logo-img {
+            width: 170px !important;
+            max-width: 170px !important;
+            height: 108px !important;
+        }
 
         /* Tool UI brand colors (dark theme) */
         :root {
@@ -744,7 +750,7 @@
           <option value="ae">www.tattvammarkets.ae</option>
           <option value="org">www.tattvammarkets.org</option>
         </select>
-        <p class="field-hint" id="websiteDesignHint">.com / .org: Prestige Signature. .ae: Minimal Luxe.</p>
+        <p class="field-hint" id="websiteDesignHint">.com / .ae / .org: Minimal Luxe (same layout; website URL changes).</p>
       </div>
 
       <p class="section-label">Options</p>
@@ -1072,6 +1078,12 @@ function buildOutlookClipboardDocument(fragmentHtml) {
   body { margin:0; padding:0; background:#ffffff; }
   b, strong, font { color: inherit; }
   .sig-name-text, .sig-name-text b, .sig-name-text font { color:${COM_NAVY} !important; }
+  .sig-card-alt .sig-name-text, .sig-card-alt .sig-name-text b, .sig-card-alt .sig-name-text font { color:${COM_NAVY} !important; font-size:20px !important; }
+  .sig-card-alt .sig-title-text { color:#64748B !important; }
+  .sig-card-alt .sig-logo-vertical, .sig-card-alt .sig-logo-img { width:${ALT_LOGO_W}px !important; height:${ALT_LOGO_H}px !important; max-width:${ALT_LOGO_W}px !important; }
+  .sig-card-alt .sig-social-flat-icon { width:${ALT_SOCIAL_SIZE}px !important; height:${ALT_SOCIAL_SIZE}px !important; max-width:${ALT_SOCIAL_SIZE}px !important; display:block !important; }
+  .sig-card-alt .sig-card-social { font-size:${ALT_SOCIAL_SIZE}px !important; line-height:${ALT_SOCIAL_SIZE}px !important; padding-top:12px !important; }
+  .sig-card-alt .sig-card-social-spacer { height:${ALT_SOCIAL_BELOW}px !important; line-height:${ALT_SOCIAL_BELOW}px !important; font-size:0 !important; }
 </style>
 ${buildResponsiveStyles()}
 </head>
@@ -1092,60 +1104,39 @@ const CARD_THEME_BASE = {
     text: '#64748B'
 };
 
+const MINIMAL_LUXE_THEME = {
+    layout: 'alt',
+    cardBg: '#FFFFFF',
+    cardBorder: '#E6EDF2',
+    divider: '#EEF2F6',
+    disclaimerBorder: '#EEF2F6',
+    name: '#0B1F3A',
+    titleMuted: '#64748B',
+    titleLink: '#0B1F3A',
+    label: '#0B1F3A',
+    text: '#334155',
+    accentTop: '#0B1F3A',
+    accentTopHeight: 2
+};
+
 const WEBSITE_OPTIONS = {
     com: {
         url: 'https://www.tattvammarkets.com/',
         label: 'www.tattvammarkets.com',
-        designName: 'Prestige Signature',
-        theme: {
-            id: 'com',
-            layout: 'premium',
-            cardBorder: '#D5E4E9',
-            cardBg: '#FFFFFF',
-            titleBar: '#0B1F3A',
-            disclaimerBorder: '#E2EEF0',
-            logoTagline: 'Tattvam Markets',
-            logoTaglineColor: '#0B1F3A',
-            orgName: 'Tattvam Markets'
-        }
+        designName: 'Minimal Luxe',
+        theme: Object.assign({}, MINIMAL_LUXE_THEME, { id: 'com' })
     },
     ae: {
         url: 'https://www.tattvammarkets.ae/',
         label: 'www.tattvammarkets.ae',
         designName: 'Minimal Luxe',
-        theme: {
-            id: 'ae',
-            layout: 'alt',
-            cardBg: '#FFFFFF',
-            cardBorder: '#E6EDF2',
-            divider: '#EEF2F6',
-            disclaimerBorder: '#EEF2F6',
-            name: '#0B1F3A',
-            titleMuted: '#64748B',
-            titleLink: '#0B1F3A',
-            label: '#0B1F3A',
-            text: '#334155',
-            accentTop: '#0B1F3A',
-            accentTopHeight: 2,
-            logoTagline: 'Dubai, UAE',
-            logoTaglineColor: '#94A3B8'
-        }
+        theme: Object.assign({}, MINIMAL_LUXE_THEME, { id: 'ae' })
     },
     org: {
         url: 'https://www.tattvammarkets.org/',
         label: 'www.tattvammarkets.org',
-        designName: 'Prestige Signature',
-        theme: {
-            id: 'org',
-            layout: 'premium',
-            cardBorder: '#D5E4E9',
-            cardBg: '#FFFFFF',
-            titleBar: '#0B1F3A',
-            disclaimerBorder: '#E2EEF0',
-            logoTagline: 'Tattvam Markets',
-            logoTaglineColor: '#0B1F3A',
-            orgName: 'Tattvam Markets'
-        }
+        designName: 'Minimal Luxe',
+        theme: Object.assign({}, MINIMAL_LUXE_THEME, { id: 'org' })
     }
 };
 
@@ -1266,11 +1257,24 @@ function buildPortalSignatureHtml(cleanBody) {
 .sig-com-executive .sig-com-exec-footer{background-color:#0B1F3A!important}
 .sig-com-exec-disclaimer,.sig-com-exec-disclaimer .sig-disclaimer-gray-wrap{width:620px!important;max-width:620px!important}
 .sig-com-executive .sig-com-exec-logo,.sig-com-executive .sig-premium-logo{width:110px!important;max-width:110px!important;height:auto!important;display:block!important}
+.sig-card-alt{width:540px!important;max-width:540px!important;border:1px solid #E6EDF2!important;border-collapse:collapse}
+.sig-card-alt .sig-name-text,.sig-card-alt .sig-name-text b,.sig-card-alt .sig-name-text font{color:#0B1F3A!important;font-size:20px!important}
+.sig-card-alt .sig-title-text{color:#64748B!important;font-size:12px!important}
+.sig-card-alt .sig-logo-vertical,.sig-card-alt .sig-logo-img{width:170px!important;max-width:170px!important;height:108px!important;display:block!important}
+.sig-card-alt .sig-logo-slogan{font-size:13px!important;color:#42d9e4!important;white-space:nowrap!important}
+.sig-card-alt .sig-contact-icon{width:16px!important;height:16px!important;display:block!important}
+.sig-card-alt .sig-social-flat-icon{width:${ALT_SOCIAL_SIZE}px!important;height:${ALT_SOCIAL_SIZE}px!important;max-width:${ALT_SOCIAL_SIZE}px!important;display:block!important}
+.sig-card-alt .sig-card-social{font-size:${ALT_SOCIAL_SIZE}px!important;line-height:${ALT_SOCIAL_SIZE}px!important;padding-top:12px!important}
+.sig-card-alt .sig-card-social-spacer{height:${ALT_SOCIAL_BELOW}px!important;line-height:${ALT_SOCIAL_BELOW}px!important;font-size:0!important}
 .sig-name-text,.sig-name-text b,.sig-name-text font{color:#0B1F3A!important;font-size:22px!important}
 .sig-title-text{color:#42d9e4!important}
 .sig-contact-icon{width:16px!important;height:16px!important;display:inline-block!important}
 </style>`;
     return (lightStyles + rewriteHtmlForPortal(cleanBody)).trim();
+}
+
+function msoPx(px) {
+    return Math.round(Number(px) * 15);
 }
 
 function escapeHtml(str) {
@@ -1439,13 +1443,16 @@ function buildVerticalLogoBlock(websiteUrl, options) {
     </a>`;
     }
 
+    const logoImgStyle = `display:block;border:0;outline:none;width:${w}px;height:${h}px;max-width:${w}px;mso-width-alt:${msoPx(w)};mso-height-alt:${msoPx(h)};-ms-interpolation-mode:bicubic;${imgBg}${imgAlign === 'center' ? 'margin:0 auto;' : imgAlign === 'right' ? 'margin-left:auto;' : ''}`;
+
     if (opts.forOutlook) {
-        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="${imgAlign}" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-${imgAlign === 'center' ? 'left:auto;margin-right:auto;' : imgAlign === 'right' ? 'left:auto;' : '0'}">
+        return `<table cellpadding="0" cellspacing="0" border="0" role="presentation" align="${imgAlign}" width="${w}" style="border-collapse:collapse;width:${w}px;mso-table-lspace:0pt;mso-table-rspace:0pt;margin-${imgAlign === 'center' ? 'left:auto;margin-right:auto;' : imgAlign === 'right' ? 'left:auto;' : '0'}">
       <tr>
-        <td align="${imgAlign}" valign="top" width="${w}" style="width:${w}px;padding:0;line-height:0;font-size:0;text-align:${imgAlign};background:transparent;">
+        <td align="${imgAlign}" valign="top" width="${w}" height="${h}"
+          style="width:${w}px;height:${h}px;padding:0;font-size:${h}px;line-height:${h}px;mso-line-height-rule:at-least;text-align:${imgAlign};background:transparent;">
           <a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;">
             <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0" class="sig-brand-logo sig-logo-vertical"
-              style="display:block;border:0;outline:none;width:${w}px;height:${h}px;mso-width-alt:${w};mso-height-alt:${h};-ms-interpolation-mode:bicubic;${imgBg}${imgAlign === 'center' ? 'margin:0 auto;' : imgAlign === 'right' ? 'margin-left:auto;' : ''}" />
+              style="${logoImgStyle}" />
           </a>
         </td>
       </tr>
@@ -1454,7 +1461,7 @@ function buildVerticalLogoBlock(websiteUrl, options) {
 
     return `<a href="${escapeHtml(url)}" target="_blank" style="text-decoration:none;border:0;outline:none;display:inline-block;">
       <img src="${src}" alt="Tattvam Markets" width="${w}" height="${h}" border="0" class="sig-brand-logo sig-logo-img sig-logo-vertical"
-        style="display:block;border:0;outline:none;width:${w}px;height:${h}px;max-width:${w}px;mso-width-percent:0;-ms-interpolation-mode:bicubic;${imgBg}${imgAlign === 'center' ? 'margin:0 auto;' : imgAlign === 'right' ? 'margin-left:auto;' : ''}" />
+        style="${logoImgStyle}" />
     </a>`;
 }
 
@@ -1636,6 +1643,14 @@ function buildContactInline(data, separatorColor) {
 const SIG_INNER_WIDTH = 580;
 const SIG_LONG_WIDTH = 580;
 const SIG_CARD_WIDTH = 540;
+const ALT_LOGO_W = 170;
+const ALT_LOGO_H = Math.round(ALT_LOGO_W * LOGO_VERTICAL_ASPECT);
+const ALT_SOCIAL_SIZE = 24;
+const ALT_SOCIAL_GAP = 6;
+const ALT_SOCIAL_BELOW = 18;
+const ALT_SLOGAN_W = 96;
+const ALT_SLOGAN_GAP = 8;
+const ALT_BRAND_W = ALT_LOGO_W + ALT_SLOGAN_GAP + ALT_SLOGAN_W;
 const SIG_PREMIUM_WIDTH = 620;
 const SIG_ORG_PREMIUM_WIDTH = 600;
 const CTA_LABEL = 'START TRADING';
@@ -1681,9 +1696,50 @@ function buildCardContactGrid(data, theme, options) {
     const waLink = waNum ? `https://wa.me/${waNum}` : '';
     const linkStyle = `color:${t.text};text-decoration:none;font-family:${FONT};font-size:12px;font-weight:normal;mso-color-alt:${t.text};`;
     const labelStyle = `font-family:${FONT};font-size:12px;font-weight:600;color:${t.label};mso-color-alt:${t.label};`;
+    const rowPad = opts.rowPad || '0 0 6px 0';
+
+    if (opts.showIcons) {
+        const iconMap = opts.iconDataUrls || {};
+        const iconSize = opts.iconSize || 16;
+        function iconRow(file, alt, html, isLast) {
+            const pad = isLast ? '0' : rowPad;
+            return `<tr>
+      <td class="sig-card-contact" valign="middle" style="padding:${pad};">
+        <table cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+          <tr>
+            <td valign="middle" width="${iconSize + 8}" height="${iconSize}"
+              style="width:${iconSize + 8}px;height:${iconSize}px;padding:0 8px 0 0;font-size:${iconSize}px;line-height:${iconSize}px;mso-line-height-rule:at-least;vertical-align:middle;">
+              ${buildSimpleTealIcon(file, alt, iconSize, iconMap)}
+            </td>
+            <td valign="middle" style="vertical-align:middle;font-family:${FONT};font-size:12px;line-height:1.55;${SIG_NOWRAP}">
+              ${html}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+        }
+        const linkHtml = (href, text, newTab) =>
+            `<a href="${href}"${newTab ? ' target="_blank"' : ''} style="${linkStyle}"><font color="${t.text}" face="Arial, Helvetica, sans-serif" style="${linkStyle}">${text}</font></a>`;
+        const items = [
+            iconRow('icons/phone-teal.png', 'Phone', linkHtml(`tel:${escapeHtml(tel)}`, phone), false)
+        ];
+        if (data.whatsapp) {
+            items.push(iconRow('icons/whatsapp-teal.png', 'WhatsApp', linkHtml(waLink, whatsapp, true), false));
+        }
+        items.push(iconRow('icons/email-teal.png', 'Email', linkHtml(`mailto:${email}`, email), !opts.includeWeb));
+        if (opts.includeWeb) {
+            items.push(iconRow(
+                'icons/globe-teal.png',
+                'Web',
+                linkHtml(escapeHtml(data.websiteUrl), websiteLabel, true),
+                true
+            ));
+        }
+        return `<table class="sig-card-contact-table sig-contact" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${items.join('')}</table>`;
+    }
 
     function row(label, html) {
-        const rowPad = opts.rowPad || '0 0 6px 0';
         return `<tr>
       <td class="sig-card-contact" valign="top" style="padding:${rowPad};font-family:${FONT};font-size:12px;line-height:1.55;${SIG_NOWRAP}">
         <span style="${labelStyle}">${label}:&nbsp;</span>${html}
@@ -1734,21 +1790,62 @@ function buildCardLogoColumn(logoHtml, colWidth, options) {
     const w = colWidth || 96;
     const align = opts.align || 'left';
     const hasTagline = !!opts.tagline;
+    const hasSlogan = !!opts.slogan;
     const taglineColor = opts.taglineColor || '#E53935';
-    const logoAlign = hasTagline ? 'center' : align;
-    const taglineAlign = opts.taglineAlign || (hasTagline ? 'center' : align);
-    const tableAlign = hasTagline && align === 'right' ? 'right' : align;
+    const logoAlign = (hasTagline || hasSlogan) ? 'center' : align;
+    const taglineAlign = opts.taglineAlign || ((hasTagline || hasSlogan) ? 'center' : align);
+    const tableAlign = (hasTagline || hasSlogan) && align === 'right' ? 'right' : align;
     const taglinePad = opts.taglineAbove ? '0 0 1px 0' : '3px 0 0 0';
+    const taglineSize = opts.taglineSize || 9;
+    const slogan = opts.slogan || '';
+    const sloganColor = opts.sloganColor || '#42d9e4';
+    const sloganSize = opts.sloganSize || 11;
     const taglineRow = hasTagline ? `
       <tr>
         <td align="${taglineAlign}" class="sig-logo-tagline" width="${w}"
-          style="padding:${taglinePad};width:${w}px;text-align:${taglineAlign};font-family:${FONT};font-size:9px;line-height:1.2;mso-line-height-rule:exactly;">
+          style="padding:${taglinePad};width:${w}px;text-align:${taglineAlign};font-family:${FONT};font-size:${taglineSize}px;line-height:1.2;mso-line-height-rule:exactly;">
           <span style="color:${taglineColor} !important;mso-color-alt:${taglineColor};-webkit-text-fill-color:${taglineColor} !important;font-weight:600;letter-spacing:0.9px;text-transform:uppercase;display:inline-block;white-space:nowrap;">${escapeHtml(opts.tagline)}</span>
+        </td>
+      </tr>` : '';
+    const sloganRow = slogan ? `
+      <tr>
+        <td align="${taglineAlign}" class="sig-logo-slogan" width="${w}"
+          style="padding:4px 0 0 0;width:${w}px;height:${Number(sloganSize) + 6}px;text-align:${taglineAlign};font-family:Arial,Helvetica,sans-serif;font-size:${sloganSize}px;line-height:1.2;mso-line-height-rule:exactly;">
+          <font color="${sloganColor}" face="Arial, Helvetica, sans-serif" style="font-family:Arial,Helvetica,sans-serif;font-size:${sloganSize}px;font-weight:700;color:${sloganColor};letter-spacing:0.3px;mso-color-alt:${sloganColor};">${escapeHtml(slogan)}</font>
         </td>
       </tr>` : '';
     const taglineBelow = hasTagline && !opts.taglineAbove ? taglineRow : '';
     const taglineAbove = hasTagline && opts.taglineAbove ? taglineRow : '';
-    const whiteCell = opts.logoWhiteBg ? ` class="sig-logo-white-cell" bgcolor="#FFFFFF" data-ogsb="#FFFFFF" style="width:${w}px;padding:0;line-height:0;font-size:0;text-align:${logoAlign};${buildAntiInvertBg('#FFFFFF')}mso-color-alt:#FFFFFF;"` : ` style="width:${w}px;padding:0;line-height:0;font-size:0;text-align:${logoAlign};"`;
+    const logoCellH = opts.logoHeight || 0;
+    const logoCellStyle = logoCellH
+        ? `width:${w}px;height:${logoCellH}px;padding:0;font-size:${logoCellH}px;line-height:${logoCellH}px;mso-line-height-rule:at-least;text-align:${logoAlign};`
+        : `width:${w}px;padding:0;line-height:0;font-size:0;text-align:${logoAlign};`;
+    const whiteCell = opts.logoWhiteBg
+        ? ` class="sig-logo-white-cell" bgcolor="#FFFFFF" data-ogsb="#FFFFFF" style="${logoCellStyle}${buildAntiInvertBg('#FFFFFF')}mso-color-alt:#FFFFFF;"`
+        : ` style="${logoCellStyle}"`;
+
+    if (opts.sloganBeside && slogan) {
+        const sloganW = opts.sloganColWidth || ALT_SLOGAN_W;
+        const gap = opts.sloganGap != null ? opts.sloganGap : ALT_SLOGAN_GAP;
+        const totalW = w + gap + sloganW;
+        const sloganH = logoCellH || 40;
+        const sloganStyle = `font-family:Arial,Helvetica,sans-serif;font-size:${sloganSize}px;font-weight:700;color:${sloganColor};line-height:1.25;mso-color-alt:${sloganColor};white-space:nowrap;`;
+        return `
+    <table class="sig-card-logo-col sig-card-logo-beside" cellpadding="0" cellspacing="0" border="0" align="${tableAlign}" width="${totalW}"
+      style="border-collapse:collapse;width:${totalW}px;${tableAlign === 'right' ? 'margin-left:auto;' : ''}mso-table-lspace:0pt;mso-table-rspace:0pt;">
+      <tr>
+        <td align="center" valign="middle" width="${w}" height="${logoCellH || ''}"${whiteCell}>
+          ${logoHtml}
+        </td>
+        <td class="sig-logo-slogan-gap" width="${gap}" style="width:${gap}px;padding:0;font-size:0;line-height:0;">&nbsp;</td>
+        <td class="sig-logo-slogan" align="left" valign="middle" width="${sloganW}" height="${sloganH}"
+          style="width:${sloganW}px;height:${sloganH}px;padding:0;text-align:left;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:${sloganSize}px;line-height:1.25;mso-line-height-rule:exactly;">
+          <font color="${sloganColor}" face="Arial, Helvetica, sans-serif" style="${sloganStyle}">${escapeHtml(slogan)}</font>
+        </td>
+      </tr>
+    </table>`;
+    }
+
     return `
     <table class="sig-card-logo-col" cellpadding="0" cellspacing="0" border="0" align="${tableAlign}" style="border-collapse:collapse;width:${w}px;${tableAlign === 'right' ? 'margin-left:auto;' : ''}">
       ${taglineAbove}
@@ -1756,7 +1853,7 @@ function buildCardLogoColumn(logoHtml, colWidth, options) {
         <td align="${logoAlign}" width="${w}"${whiteCell}>
           ${logoHtml}
         </td>
-      </tr>${taglineBelow}
+      </tr>${taglineBelow}${sloganRow}
     </table>`;
 }
 
@@ -2650,11 +2747,12 @@ function buildCardSignatureAltInner(data, options) {
     const title = escapeHtml(data.title);
     const iconMap = opts.iconDataUrls || {};
     const width = SIG_CARD_WIDTH;
-    const padX = 18;
-    const padY = 16;
-    const logoW = 96;
-    const gapW = 18;
-    const detailsW = width - (padX * 2) - logoW - gapW;
+    const padX = 14;
+    const padY = 12;
+    const logoW = ALT_LOGO_W;
+    const gapW = 10;
+    const innerW = width - (padX * 2);
+    const detailsW = innerW - logoW - gapW;
     const logoHtml = buildVerticalLogoBlock(data.websiteUrl, {
         width: logoW,
         forOutlook,
@@ -2662,15 +2760,23 @@ function buildCardSignatureAltInner(data, options) {
     });
     const logoCol = buildCardLogoColumn(logoHtml, logoW, {
         align: 'right',
-        tagline: theme.logoTagline || '',
-        taglineColor: theme.logoTaglineColor || '#94A3B8',
-        taglineAlign: 'center'
+        taglineAlign: 'center',
+        logoHeight: ALT_LOGO_H,
+        slogan: 'Trade Better',
+        sloganColor: '#42d9e4',
+        sloganSize: 13
     });
-    const contactCol = buildCardContactGrid(data, theme, { includeWeb: true, rowPad: '0 0 6px 0' });
+    const contactCol = buildCardContactGrid(data, theme, {
+        includeWeb: true,
+        rowPad: '0 0 6px 0',
+        showIcons: true,
+        iconSize: 16,
+        iconDataUrls: iconMap
+    });
     const socialHtml = buildComFlatSocialRow(data, {
-        variant: 'navy',
-        size: 22,
-        gap: 6,
+        variant: 'color',
+        size: ALT_SOCIAL_SIZE,
+        gap: ALT_SOCIAL_GAP,
         align: 'left',
         iconDataUrls: iconMap
     });
@@ -2688,24 +2794,29 @@ function buildCardSignatureAltInner(data, options) {
       <tr>
         <td class="sig-card-surface" bgcolor="${cardBg}" width="${width}"
           style="${cardBgStyle}padding:${padY}px ${padX}px 14px ${padX}px;width:${width}px;">
-          <table class="sig-card-inner sig-card-inner-alt" cellpadding="0" cellspacing="0" border="0" width="${width - padX * 2}"
-            style="border-collapse:collapse;width:${width - padX * 2}px;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
+          <table class="sig-card-inner sig-card-inner-alt" cellpadding="0" cellspacing="0" border="0" width="${innerW}"
+            style="border-collapse:collapse;width:${innerW}px;table-layout:fixed;mso-table-lspace:0pt;mso-table-rspace:0pt;">
             <tr>
               <td class="sig-card-details" valign="top" align="left" width="${detailsW}"
                 style="width:${detailsW}px;vertical-align:top;padding:0;text-align:left;">
-                <table cellpadding="0" cellspacing="0" border="0" width="${detailsW}" style="border-collapse:collapse;width:${detailsW}px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="${detailsW}" style="border-collapse:collapse;width:${detailsW}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
                   <tr><td class="sig-name-text" style="padding:0 0 4px 0;${nameStyle}">${buildOutlookSafeText(name, nameStyle, nameColor)}</td></tr>
                   <tr><td class="sig-title-text" style="padding:0 0 8px 0;${titleStyle}"><font color="${titleColor}" face="Arial, Helvetica, sans-serif" style="${titleStyle}">${title}</font></td></tr>
                   <tr><td style="padding:0 0 10px 0;line-height:0;font-size:0;mso-line-height-rule:exactly;">${buildCardLightDivider()}</td></tr>
                   <tr><td style="padding:0;">${contactCol}</td></tr>
                   ${socialHtml ? `<tr>
-                    <td class="sig-card-social" style="padding:10px 0 0 0;line-height:0;font-size:0;mso-line-height-rule:exactly;">
+                    <td class="sig-card-social" valign="top"
+                      style="padding:12px 0 0 0;font-size:${ALT_SOCIAL_SIZE}px;line-height:${ALT_SOCIAL_SIZE}px;mso-line-height-rule:at-least;">
                       ${socialHtml}
                     </td>
+                  </tr>
+                  <tr>
+                    <td class="sig-card-social-spacer" height="${ALT_SOCIAL_BELOW}"
+                      style="height:${ALT_SOCIAL_BELOW}px;padding:0;font-size:0;line-height:${ALT_SOCIAL_BELOW}px;mso-line-height-rule:exactly;">&nbsp;</td>
                   </tr>` : ''}
                 </table>
               </td>
-              <td width="${gapW}" style="width:${gapW}px;padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+              <td class="sig-card-gap" width="${gapW}" style="width:${gapW}px;padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
               <td class="sig-card-logo-right" valign="top" align="right" width="${logoW}"
                 style="width:${logoW}px;vertical-align:top;padding:0;text-align:right;">
                 ${logoCol}
@@ -2713,7 +2824,7 @@ function buildCardSignatureAltInner(data, options) {
             </tr>
           </table>
           ${data.includeDisclaimer ? `
-          <table cellpadding="0" cellspacing="0" border="0" width="${width - padX * 2}" style="border-collapse:collapse;width:${width - padX * 2}px;">
+          <table cellpadding="0" cellspacing="0" border="0" width="${innerW}" style="border-collapse:collapse;width:${innerW}px;mso-table-lspace:0pt;mso-table-rspace:0pt;">
             <tr>
               <td class="sig-disclaimer sig-card-disclaimer sig-disclaimer-text" align="justify" valign="top"
                 style="padding:14px 0 0 0;border-top:1px solid ${theme.disclaimerBorder};${DISCLAIMER_LINE_STYLE}">
@@ -2941,7 +3052,7 @@ function buildComFlatSocialRow(data, options) {
           ${imgComment}<a href="${escapeHtml(href)}" target="_blank" style="text-decoration:none;border:0;">
             <img src="${src}" alt="${escapeHtml(s.alt)}" width="${size}" height="${size}" border="0"
               class="sig-social-flat-icon"
-              style="display:block;border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;-ms-interpolation-mode:bicubic;" />
+              style="display:block;border:0;outline:none;text-decoration:none;width:${size}px;height:${size}px;mso-width-alt:${msoPx(size)};mso-height-alt:${msoPx(size)};-ms-interpolation-mode:bicubic;" />
           </a>
         </td>`;
     }).join('');
@@ -3682,7 +3793,7 @@ function buildSimpleTealIcon(file, alt, size, iconDataUrls) {
     }
     return `<img src="${src}" alt="${escapeHtml(alt || '')}" width="${s}" height="${s}" border="0"
       class="sig-contact-icon"
-      style="display:block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;-ms-interpolation-mode:bicubic;" />`;
+      style="display:block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;mso-width-alt:${msoPx(s)};mso-height-alt:${msoPx(s)};-ms-interpolation-mode:bicubic;" />`;
 }
 
 function buildOrgSimpleContactRow(iconHtml, contentHtml, padBottom) {
@@ -4776,6 +4887,90 @@ function buildResponsiveStyles() {
           }
         }
       a { word-break: break-word; }
+      /* Minimal Luxe (.ae/.com/.org) — win over generic 96px / teal-title rules */
+      .sig-card-alt {
+        border: 1px solid #E6EDF2 !important;
+        border-radius: 0 !important;
+        width: ${SIG_CARD_WIDTH}px !important;
+        max-width: ${SIG_CARD_WIDTH}px !important;
+        border-collapse: collapse !important;
+      }
+      .sig-card-alt .sig-name-text,
+      .sig-card-alt .sig-name-text b,
+      .sig-card-alt .sig-name-text font {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #0B1F3A !important;
+        line-height: 1.2 !important;
+        mso-color-alt: #0B1F3A !important;
+      }
+      .sig-card-alt .sig-title-text,
+      .sig-card-alt .sig-title-text font {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: #64748B !important;
+        line-height: 1.4 !important;
+        mso-color-alt: #64748B !important;
+      }
+      .sig-card-alt .sig-card-social {
+        padding-top: 12px !important;
+        padding-bottom: 0 !important;
+        font-size: ${ALT_SOCIAL_SIZE}px !important;
+        line-height: ${ALT_SOCIAL_SIZE}px !important;
+      }
+      .sig-card-alt .sig-card-social-spacer {
+        height: ${ALT_SOCIAL_BELOW}px !important;
+        font-size: 0 !important;
+        line-height: ${ALT_SOCIAL_BELOW}px !important;
+        mso-line-height-rule: exactly !important;
+      }
+      .sig-card-alt .sig-logo-vertical,
+      .sig-card-alt .sig-logo-img,
+      .sig-card-alt .sig-brand-logo {
+        width: ${ALT_LOGO_W}px !important;
+        max-width: ${ALT_LOGO_W}px !important;
+        height: ${ALT_LOGO_H}px !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      .sig-card-alt .sig-contact-icon {
+        width: 16px !important;
+        height: 16px !important;
+        max-width: 16px !important;
+        min-width: 16px !important;
+        display: block !important;
+      }
+      .sig-card-alt .sig-social-flat-icon {
+        width: ${ALT_SOCIAL_SIZE}px !important;
+        height: ${ALT_SOCIAL_SIZE}px !important;
+        max-width: ${ALT_SOCIAL_SIZE}px !important;
+        min-width: ${ALT_SOCIAL_SIZE}px !important;
+        display: block !important;
+      }
+      .sig-card-alt .sig-logo-slogan,
+      .sig-card-alt .sig-logo-slogan font {
+        color: #42d9e4 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        mso-color-alt: #42d9e4 !important;
+        white-space: nowrap !important;
+      }
+      .sig-card-alt .sig-card-logo-col,
+      .sig-card-alt .sig-card-logo-beside {
+        width: ${ALT_LOGO_W}px !important;
+        max-width: ${ALT_LOGO_W}px !important;
+      }
+      .sig-card-alt .sig-card-logo-right {
+        vertical-align: top !important;
+        padding-top: 0 !important;
+      }
+      .sig-wrap.sig-card-root .sig-card-alt {
+        width: ${SIG_CARD_WIDTH}px !important;
+        max-width: ${SIG_CARD_WIDTH}px !important;
+      }
       @media only screen and (max-width: 520px) {
         .sig-wrap { width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
         .sig-wrap.sig-card-root, .sig-card { width: 100% !important; max-width: 100% !important; }
@@ -4954,6 +5149,55 @@ function buildResponsiveStyles() {
           width: 26px !important;
           height: 26px !important;
           max-width: 26px !important;
+        }
+        .sig-card-alt,
+        .sig-wrap.sig-card-root .sig-card-alt,
+        .sig-card-alt .sig-card-inner-alt {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .sig-card-alt .sig-card-gap {
+          display: none !important;
+          width: 0 !important;
+          max-width: 0 !important;
+          height: 0 !important;
+          font-size: 0 !important;
+          line-height: 0 !important;
+          overflow: hidden !important;
+        }
+        .sig-card-alt .sig-card-details,
+        .sig-card-alt .sig-card-logo-right {
+          display: block !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          text-align: left !important;
+        }
+        .sig-card-alt .sig-card-logo-col,
+        .sig-card-alt .sig-card-logo-beside {
+          width: ${ALT_LOGO_W}px !important;
+          max-width: ${ALT_LOGO_W}px !important;
+          margin-left: 0 !important;
+        }
+        .sig-card-alt .sig-name-text,
+        .sig-card-alt .sig-name-text b,
+        .sig-card-alt .sig-name-text font {
+          font-size: 18px !important;
+          color: #0B1F3A !important;
+          white-space: normal !important;
+        }
+        .sig-card-alt .sig-title-text,
+        .sig-card-alt .sig-title-text font {
+          color: #64748B !important;
+          white-space: normal !important;
+        }
+        .sig-card-alt .sig-logo-vertical,
+        .sig-card-alt .sig-logo-img,
+        .sig-card-alt .sig-brand-logo {
+          width: ${ALT_LOGO_W}px !important;
+          max-width: ${ALT_LOGO_W}px !important;
+          height: ${ALT_LOGO_H}px !important;
+          margin-left: 0 !important;
+          margin-right: auto !important;
         }
       }
     </style>`;
@@ -5313,8 +5557,8 @@ function getFormData() {
 
     const websiteKey = document.getElementById('websiteUrl').value;
     const website = getWebsiteConfig(websiteKey);
-    /* .com and .org use the same Prestige Signature (Design 5) */
-    const comDesign = (websiteKey === 'com' || websiteKey === 'org') ? 'fantastic' : '';
+    /* .com, .ae, and .org all use Minimal Luxe (alt card) */
+    const comDesign = '';
 
     return {
         name: document.getElementById('fullName').value.trim(),
@@ -6359,8 +6603,8 @@ function updateWebsiteDesignHint() {
     const hint = document.getElementById('websiteDesignHint');
     if (hint) {
         const styleNote = {
-            com: 'Prestige Signature (same as .org)',
-            org: 'Prestige Signature (same as .com)',
+            com: 'Minimal Luxe (same as .ae / .org)',
+            org: 'Minimal Luxe (same as .ae / .com)',
             ae: 'Minimal Luxe'
         };
         hint.textContent = `${cfg.label} — ${styleNote[key] || styleNote.com}`;
