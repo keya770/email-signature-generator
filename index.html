@@ -765,6 +765,7 @@
         </label>
       </div>
 
+      <div id="socialIconsSection">
       <p class="section-label">Social Icons</p>
       <div class="checkbox-group" id="socialToggles">
         <label><input type="checkbox" name="social" value="linkedin" checked> LinkedIn</label>
@@ -773,6 +774,7 @@
         <label><input type="checkbox" name="social" value="telegram" checked> Telegram</label>
         <label><input type="checkbox" name="social" value="instagram" checked> Instagram</label>
         <label><input type="checkbox" name="social" value="facebook" checked> Facebook</label>
+      </div>
       </div>
 
       <!-- btnGenerate → generateSignature() — validates then builds HTML -->
@@ -2774,7 +2776,7 @@ function buildCardSignatureAltInner(data, options) {
         iconSize: 16,
         iconDataUrls: iconMap
     });
-    const socialHtml = buildComFlatSocialRow(data, {
+    const socialHtml = data.websiteKey === 'ae' ? '' : buildComFlatSocialRow(data, {
         variant: 'color',
         size: ALT_SOCIAL_SIZE,
         gap: ALT_SOCIAL_GAP,
@@ -5570,6 +5572,7 @@ function getFormData() {
     const website = getWebsiteConfig(websiteKey);
     /* .com, .ae, and .org all use Minimal Luxe (alt card) */
     const comDesign = '';
+    const hideSocial = websiteKey === 'ae';
 
     return {
         name: document.getElementById('fullName').value.trim(),
@@ -5585,7 +5588,7 @@ function getFormData() {
         template: 'card',
         emailMode: getPreviewEmailMode(),
         includeDisclaimer: document.getElementById('includeDisclaimer').checked,
-        socialPlatforms
+        socialPlatforms: hideSocial ? [] : socialPlatforms
     };
 }
 
@@ -6614,12 +6617,14 @@ function updateWebsiteDesignHint() {
     const hint = document.getElementById('websiteDesignHint');
     if (hint) {
         const styleNote = {
-            com: 'Minimal Luxe (same as .ae / .org)',
-            org: 'Minimal Luxe (same as .ae / .com)',
-            ae: 'Minimal Luxe'
+            com: 'Minimal Luxe (same as .org)',
+            org: 'Minimal Luxe (same as .com)',
+            ae: 'Minimal Luxe — no social icons'
         };
         hint.textContent = `${cfg.label} — ${styleNote[key] || styleNote.com}`;
     }
+    const socialSection = document.getElementById('socialIconsSection');
+    if (socialSection) socialSection.hidden = (key === 'ae');
 }
 
 /* Re-run generateSignature when disclaimer/social/website toggles change */
