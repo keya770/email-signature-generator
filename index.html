@@ -453,7 +453,8 @@
         }
         .preview-shell.mode-dark .sig-logo-img,
         .preview-shell.mode-dark .sig-logo-vertical,
-        .preview-shell.mode-dark .sig-brand-logo {
+        .preview-shell.mode-dark .sig-brand-logo,
+        .preview-shell.mode-dark .sig-contact-icon {
             background: transparent !important;
             background-color: transparent !important;
         }
@@ -1262,13 +1263,13 @@ function buildPortalSignatureHtml(cleanBody) {
 .sig-card-alt .sig-title-text{color:#64748B!important;font-size:12px!important}
 .sig-card-alt .sig-logo-vertical,.sig-card-alt .sig-logo-img{width:170px!important;max-width:170px!important;height:108px!important;display:block!important}
 .sig-card-alt .sig-logo-slogan{font-size:13px!important;color:#42d9e4!important;white-space:nowrap!important}
-.sig-card-alt .sig-contact-icon{width:16px!important;height:16px!important;display:block!important}
+.sig-card-alt .sig-contact-icon{width:16px!important;height:16px!important;display:block!important;background:transparent!important}
 .sig-card-alt .sig-social-flat-icon{width:${ALT_SOCIAL_SIZE}px!important;height:${ALT_SOCIAL_SIZE}px!important;max-width:${ALT_SOCIAL_SIZE}px!important;display:block!important}
 .sig-card-alt .sig-card-social{font-size:${ALT_SOCIAL_SIZE}px!important;line-height:${ALT_SOCIAL_SIZE}px!important;padding-top:12px!important}
 .sig-card-alt .sig-card-social-spacer{height:${ALT_SOCIAL_BELOW}px!important;line-height:${ALT_SOCIAL_BELOW}px!important;font-size:0!important}
 .sig-name-text,.sig-name-text b,.sig-name-text font{color:#0B1F3A!important;font-size:22px!important}
 .sig-title-text{color:#42d9e4!important}
-.sig-contact-icon{width:16px!important;height:16px!important;display:inline-block!important}
+.sig-contact-icon{width:16px!important;height:16px!important;display:inline-block!important;background:transparent!important;background-color:transparent!important}
 </style>`;
     return (lightStyles + rewriteHtmlForPortal(cleanBody)).trim();
 }
@@ -3793,7 +3794,7 @@ function buildSimpleTealIcon(file, alt, size, iconDataUrls) {
     }
     return `<img src="${src}" alt="${escapeHtml(alt || '')}" width="${s}" height="${s}" border="0"
       class="sig-contact-icon"
-      style="display:block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;mso-width-alt:${msoPx(s)};mso-height-alt:${msoPx(s)};-ms-interpolation-mode:bicubic;" />`;
+      style="display:block;border:0;outline:none;text-decoration:none;width:${s}px;height:${s}px;background:transparent;background-color:transparent;mso-width-alt:${msoPx(s)};mso-height-alt:${msoPx(s)};-ms-interpolation-mode:bicubic;" />`;
 }
 
 function buildOrgSimpleContactRow(iconHtml, contentHtml, padBottom) {
@@ -4885,6 +4886,14 @@ function buildResponsiveStyles() {
             color: #1a1a1a !important;
             -webkit-text-fill-color: #1a1a1a !important;
           }
+          .sig-contact-icon,
+          .sig-card-alt .sig-contact-icon,
+          .sig-card-alt .sig-logo-img,
+          .sig-card-alt .sig-logo-vertical,
+          .sig-card-alt .sig-brand-logo {
+            background: transparent !important;
+            background-color: transparent !important;
+          }
         }
       a { word-break: break-word; }
       /* Minimal Luxe (.ae/.com/.org) — win over generic 96px / teal-title rules */
@@ -4942,6 +4951,8 @@ function buildResponsiveStyles() {
         max-width: 16px !important;
         min-width: 16px !important;
         display: block !important;
+        background: transparent !important;
+        background-color: transparent !important;
       }
       .sig-card-alt .sig-social-flat-icon {
         width: ${ALT_SOCIAL_SIZE}px !important;
