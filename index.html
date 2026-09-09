@@ -29,7 +29,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Tattvam Markets — Email Signature Generator</title>
+    <!-- pages-build: 2026-09-09-ae-no-social -->
     <link rel="icon" href="Tattvam_VLogo_Transparent.png" type="image/png">
     <!-- CSS styles ONLY the generator tool — NOT included in copied signature HTML -->
     <style>
@@ -168,6 +172,8 @@
             color: #8a8fa0;
             line-height: 1.4;
         }
+        #socialIconsSection[hidden],
+        body.site-ae #socialIconsSection { display: none !important; }
 
         .design-picker { margin-top: 4px; }
         .design-picker[hidden] { display: none !important; }
@@ -751,7 +757,7 @@
           <option value="ae">www.tattvammarkets.ae</option>
           <option value="org">www.tattvammarkets.org</option>
         </select>
-        <p class="field-hint" id="websiteDesignHint">.com / .ae / .org: Minimal Luxe (same layout; website URL changes).</p>
+        <p class="field-hint" id="websiteDesignHint">.com / .org: social icons. .ae: no social icons.</p>
       </div>
 
       <p class="section-label">Options</p>
@@ -6625,6 +6631,7 @@ function updateWebsiteDesignHint() {
     }
     const socialSection = document.getElementById('socialIconsSection');
     if (socialSection) socialSection.hidden = (key === 'ae');
+    document.body.classList.toggle('site-ae', key === 'ae');
 }
 
 /* Re-run generateSignature when disclaimer/social/website toggles change */
